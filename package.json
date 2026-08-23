@@ -44,7 +44,7 @@
     "vitest-canvas-mock": "0.3.3"
   },
   "engines": {
-    "node": "18.0.0 - 22.x.x"
+    "node": "22.x"
   },
   "homepage": ".",
   "prettier": "@excalidraw/prettier-config",
@@ -52,7 +52,8 @@
     "build-node": "node ./scripts/build-node.js",
     "build:app:docker": "yarn --cwd ./excalidraw-app build:app:docker",
     "build:app": "yarn --cwd ./excalidraw-app build:app",
-    "build:package": "yarn --cwd ./packages/excalidraw build:esm",
+    "build:package": "rimraf packages/math/dist packages/utils/dist packages/excalidraw/dist && cd packages/math && node ../../scripts/buildMath.js && cd ../utils && node ../../scripts/buildUtils.js && cd ../excalidraw && node ../../scripts/buildPackage.js && yarn gen:types",
+    "release:teacher-playground": "node scripts/teacher-playground-release.mjs",
     "build:version": "yarn --cwd ./excalidraw-app build:version",
     "build": "yarn --cwd ./excalidraw-app build",
     "build:preview": "yarn --cwd ./excalidraw-app build:preview",
@@ -61,6 +62,7 @@
     "start:example": "yarn build:package && yarn --cwd ./examples/with-script-in-browser start",
     "test:all": "yarn test:typecheck && yarn test:code && yarn test:other && yarn test:app --watch=false",
     "test:app": "vitest",
+    "test:teacher-playground-release": "vitest --run scripts/teacher-playground-release.test.ts",
     "test:code": "eslint --max-warnings=0 --ext .js,.ts,.tsx .",
     "test:other": "yarn prettier --list-different",
     "test:typecheck": "tsc",

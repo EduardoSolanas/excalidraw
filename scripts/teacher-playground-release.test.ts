@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import {
   ensureDistPresent,
@@ -22,6 +23,30 @@ afterEach(async () => {
 });
 
 describe("teacher-playground Excalidraw release", () => {
+  it("defines a validated upload-only recovery workflow for an existing release", async () => {
+    const workflow = await readFile(
+      path.resolve(
+        path.dirname(fileURLToPath(import.meta.url)),
+        "../.github/workflows/teacher-playground-release.yml",
+      ),
+      "utf8",
+    );
+
+    expect(workflow).toMatch(/workflow_dispatch:/);
+    expect(workflow).toMatch(/version:\s*\n\s+description:/);
+    expect(workflow).toMatch(/required:\s+true/);
+    expect(workflow).toMatch(
+      /release_tag="teacher-playground-v\$VERSION"[\s\S]*outputs\.release_tag/,
+    );
+    expect(workflow).toMatch(
+      /uses: actions\/checkout@v4[\s\S]*ref: \$\{\{ steps\.validate\.outputs\.release_tag \}\}/,
+    );
+    expect(workflow).toMatch(
+      /yarn release:teacher-playground --tag "\$RELEASE_TAG"[\s\S]*node scripts\/teacher-playground-r2-upload\.mjs/,
+    );
+    expect(workflow).not.toMatch(/recover-r2:[\s\S]*gh release create/);
+  });
+
   it("accepts only the package's exact release tag", () => {
     expect(() =>
       validateReleaseTag("teacher-playground-v0.18.1-tp.2", "0.18.1-tp.2"),

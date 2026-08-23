@@ -22,6 +22,8 @@ const packageDirectory = path.join(
   "excalidraw",
 );
 const PACKAGE_ASSET_NAME = "package.tgz";
+export const PACKAGE_NAME = "@teacher-playground/excalidraw";
+const FORK_VERSION_PATTERN = /^\d+\.\d+\.\d+-tp\.\d+$/;
 
 const toPosixPath = (value) => value.split(path.sep).join("/");
 
@@ -53,6 +55,19 @@ export function validateReleaseTag(tag, version) {
   const expectedTag = `teacher-playground-v${version}`;
   if (tag !== expectedTag) {
     throw new Error(`Release tag must be ${expectedTag}; received ${tag}`);
+  }
+  return true;
+}
+
+export function validatePackageIdentity(packageJson) {
+  if (
+    packageJson.name !== PACKAGE_NAME ||
+    typeof packageJson.version !== "string" ||
+    !FORK_VERSION_PATTERN.test(packageJson.version)
+  ) {
+    throw new Error(
+      `packages/excalidraw/package.json must identify ${PACKAGE_NAME} with a semver Teacher Playground fork version`,
+    );
   }
   return true;
 }
@@ -150,14 +165,7 @@ const run = async () => {
   const packageJson = JSON.parse(
     await readFile(path.join(packageDirectory, "package.json"), "utf8"),
   );
-  if (
-    packageJson.name !== "@teacher-playground/excalidraw" ||
-    packageJson.version !== "0.18.1-tp.1"
-  ) {
-    throw new Error(
-      "packages/excalidraw/package.json must identify @teacher-playground/excalidraw@0.18.1-tp.1",
-    );
-  }
+  validatePackageIdentity(packageJson);
 
   const args = process.argv.slice(2);
   const tagArgumentIndex = args.indexOf("--tag");

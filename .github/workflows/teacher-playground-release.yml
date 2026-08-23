@@ -38,6 +38,7 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/teacher-playground-v')
     needs: validate
     runs-on: ubuntu-latest
+    environment: prod
     permissions:
       contents: write
     steps:
@@ -73,23 +74,11 @@ jobs:
             --title "$GITHUB_REF_NAME" \
             --generate-notes
       - name: Upload versioned release to Cloudflare R2
-        if: startsWith(github.ref, 'refs/tags/teacher-playground-v')
         env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          if [ -z "$AWS_ACCESS_KEY_ID" ] || [ -z "$AWS_SECRET_ACCESS_KEY" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ] || [ -z "$R2_BUCKET" ]; then
-            echo "R2 secrets are not configured; skipping upload."
-            exit 0
-          fi
           version="${GITHUB_REF_NAME#teacher-playground-v}"
-          endpoint="https://${CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com"
-          aws s3 sync "release/cdn/releases/$version" "s3://$R2_BUCKET/releases/$version" \
-            --endpoint-url "$endpoint" \
-            --cache-control "public,max-age=31536000,immutable"
-          aws s3 cp release/cdn/latest.json "s3://$R2_BUCKET/latest.json" \
-            --endpoint-url "$endpoint" \
-            --cache-control "no-cache,no-store,must-revalidate" \
-            --content-type "application/json"
+          node scripts/teacher-playground-r2-upload.mjs \
+            --directory release/cdn \
+            --version "$version"

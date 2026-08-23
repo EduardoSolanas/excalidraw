@@ -62,7 +62,7 @@
     "start:example": "yarn build:package && yarn --cwd ./examples/with-script-in-browser start",
     "test:all": "yarn test:typecheck && yarn test:code && yarn test:other && yarn test:app --watch=false",
     "test:app": "vitest",
-    "test:teacher-playground-release": "vitest --run scripts/teacher-playground-release.test.ts",
+    "test:teacher-playground-release": "vitest --run scripts/teacher-playground-release.test.ts scripts/teacher-playground-r2-upload.test.ts",
     "test:code": "eslint --max-warnings=0 --ext .js,.ts,.tsx .",
     "test:other": "yarn prettier --list-different",
     "test:typecheck": "tsc",

@@ -7,6 +7,7 @@ import path from "node:path";
 import {
   ensureDistPresent,
   prepareReleaseBundle,
+  validatePackageIdentity,
   validateReleaseTag,
 } from "./teacher-playground-release.mjs";
 
@@ -23,11 +24,26 @@ afterEach(async () => {
 describe("teacher-playground Excalidraw release", () => {
   it("accepts only the package's exact release tag", () => {
     expect(() =>
-      validateReleaseTag("teacher-playground-v0.18.1-tp.1", "0.18.1-tp.1"),
+      validateReleaseTag("teacher-playground-v0.18.1-tp.2", "0.18.1-tp.2"),
     ).not.toThrow();
     expect(() =>
-      validateReleaseTag("teacher-playground-v0.18.1", "0.18.1-tp.1"),
-    ).toThrow(/teacher-playground-v0\.18\.1-tp\.1/);
+      validateReleaseTag("teacher-playground-v0.18.1", "0.18.1-tp.2"),
+    ).toThrow(/teacher-playground-v0\.18\.1-tp\.2/);
+  });
+
+  it("accepts semver Teacher Playground fork versions", () => {
+    expect(() =>
+      validatePackageIdentity({
+        name: "@teacher-playground/excalidraw",
+        version: "0.18.1-tp.2",
+      }),
+    ).not.toThrow();
+    expect(() =>
+      validatePackageIdentity({
+        name: "@teacher-playground/excalidraw",
+        version: "0.18.1",
+      }),
+    ).toThrow(/semver Teacher Playground fork version/);
   });
 
   it("rejects skip-build when the package dist is absent", async () => {
@@ -50,7 +66,7 @@ describe("teacher-playground Excalidraw release", () => {
     const packageDirectory = path.join(workspace, "package");
     const tarballPath = path.join(
       workspace,
-      "teacher-playground-excalidraw-0.18.1-tp.1.tgz",
+      "teacher-playground-excalidraw-0.18.1-tp.2.tgz",
     );
     await mkdir(path.join(packageDirectory, "dist", "prod"), {
       recursive: true,
@@ -73,18 +89,18 @@ describe("teacher-playground Excalidraw release", () => {
       releaseCdnDirectory: path.join(workspace, "first", "release", "cdn"),
       packageName: "@teacher-playground/excalidraw",
       tarballPath,
-      version: "0.18.1-tp.1",
+      version: "0.18.1-tp.2",
     });
     const second = await prepareReleaseBundle({
       packageDirectory,
       releaseCdnDirectory: path.join(workspace, "second", "release", "cdn"),
       packageName: "@teacher-playground/excalidraw",
       tarballPath,
-      version: "0.18.1-tp.1",
+      version: "0.18.1-tp.2",
     });
 
     expect(first.releaseDirectory).toMatch(
-      /release[\\/]cdn[\\/]releases[\\/]0\.18\.1-tp\.1$/,
+      /release[\\/]cdn[\\/]releases[\\/]0\.18\.1-tp\.2$/,
     );
     expect(first.tarballName).toBe("package.tgz");
     expect(
@@ -119,7 +135,7 @@ describe("teacher-playground Excalidraw release", () => {
     );
     expect(JSON.parse(firstManifest)).toMatchObject({
       name: "@teacher-playground/excalidraw",
-      version: "0.18.1-tp.1",
+      version: "0.18.1-tp.2",
       files: [
         { path: "dist/prod/index.js" },
         { path: "dist/types/index.d.ts" },
@@ -133,12 +149,12 @@ describe("teacher-playground Excalidraw release", () => {
     ).toBe(expectedIndexHash);
     expect(JSON.parse(firstLatest)).toEqual({
       name: "@teacher-playground/excalidraw",
-      version: "0.18.1-tp.1",
-      release: "releases/0.18.1-tp.1",
-      dist: "releases/0.18.1-tp.1/dist",
-      package: "releases/0.18.1-tp.1/package.tgz",
-      manifest: "releases/0.18.1-tp.1/manifest.json",
-      checksums: "releases/0.18.1-tp.1/SHA256SUMS",
+      version: "0.18.1-tp.2",
+      release: "releases/0.18.1-tp.2",
+      dist: "releases/0.18.1-tp.2/dist",
+      package: "releases/0.18.1-tp.2/package.tgz",
+      manifest: "releases/0.18.1-tp.2/manifest.json",
+      checksums: "releases/0.18.1-tp.2/SHA256SUMS",
     });
   });
 });

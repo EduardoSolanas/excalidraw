@@ -28,26 +28,24 @@ The fork repository is `EduardoSolanas/excalidraw`. Its release branch is `teach
 
 ```sh
 git push origin teacher-playground/release-v0.18.1
-git push origin teacher-playground-v0.18.1-tp.1
+git push origin teacher-playground-v0.18.1-tp.2
 ```
 
 The workflow validates the package identity, release assembly, types, lint, formatting, and production package build. A matching tag creates a GitHub Release containing the package tarball, checksums, manifest, and `latest.json`.
 
-The release workflow uploads to R2 when these repository or environment secrets are configured:
+The release job uses the existing playground CI contract: it runs in the `prod` environment and uploads through Cloudflare's authenticated R2 REST API. Configure these exact GitHub environment values:
 
-- `CLOUDFLARE_ACCOUNT_ID` — the account that owns the R2 bucket.
-- `R2_ACCESS_KEY_ID` — an R2 API token access key ID.
-- `R2_SECRET_ACCESS_KEY` — the matching secret access key.
-- `R2_BUCKET` — the provisioned bucket name.
+- secret `CLOUDFLARE_API_TOKEN` — a Cloudflare API token with permission to write R2 objects.
+- variable `CLOUDFLARE_ACCOUNT_ID` — the account that owns the R2 bucket.
 
-If any upload secret is absent, the GitHub Release is still created and the R2 upload step exits successfully without publishing. Terraform provisioning uses `CLOUDFLARE_API_TOKEN` locally or in a separately authorized infrastructure workflow. Do not commit token values or a Terraform state file.
+The uploader targets the fixed Terraform bucket `teacher-playground-excalidraw`; no S3 access-key or secret-key pair is required. A missing token or account variable fails the tagged release job clearly after the GitHub Release assets are created, so the bundle remains downloadable while the CDN status is visibly red. Terraform provisioning uses the same `CLOUDFLARE_API_TOKEN` locally or in a separately authorized infrastructure workflow. Do not commit token values or a Terraform state file.
 
 ## Release layout and tag
 
-The first fork release uses the tag convention:
+The current fork release uses the tag convention:
 
 ```text
-teacher-playground-v0.18.1-tp.1
+teacher-playground-v0.18.1-tp.2
 ```
 
 For a configured HTTPS custom domain, publish each release without overwriting older version paths:
@@ -67,17 +65,17 @@ Use Node 22 with Corepack and the locked Yarn dependencies. The release command 
 ```sh
 corepack enable
 yarn install --frozen-lockfile --non-interactive
-yarn release:teacher-playground --tag teacher-playground-v0.18.1-tp.1
+yarn release:teacher-playground --tag teacher-playground-v0.18.1-tp.2
 ```
 
-The output is written below `release/cdn`. The GitHub Actions tag job uploads the same tree as a workflow artifact and GitHub Release, then publishes the versioned directory to R2 with immutable cache headers and updates only `latest.json` with no-cache headers.
+The output is written below `release/cdn`. The GitHub Actions tag job uploads the same tree as a workflow artifact and GitHub Release, then `scripts/teacher-playground-r2-upload.mjs` publishes every versioned object through the Cloudflare R2 Upload Object API with immutable cache headers and updates only `latest.json` with no-cache headers. The uploader preserves nested object paths and limits concurrent requests.
 
 ## Install an immutable fork tarball
 
 Consumers that need this exact build can install the versioned tarball directly instead of a moving latest pointer:
 
 ```sh
-npm install https://cdn.example.com/releases/0.18.1-tp.1/package.tgz
+npm install https://cdn.example.com/releases/0.18.1-tp.2/package.tgz
 ```
 
 Use the URL for the chosen version and record it in the parent project’s lock file. Do not use `/latest.json` as an install URL; it is a release pointer, not a package archive.

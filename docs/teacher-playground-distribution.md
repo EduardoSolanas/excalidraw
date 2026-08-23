@@ -40,10 +40,7 @@ The release job uses the existing playground CI contract: it runs in the `prod` 
 
 The uploader targets the fixed Terraform bucket `teacher-playground-excalidraw`; no S3 access-key or secret-key pair is required. A missing token or account variable fails the tagged release job clearly after the GitHub Release assets are created, so the bundle remains downloadable while the CDN status is visibly red. Terraform provisioning uses the same `CLOUDFLARE_API_TOKEN` locally or in a separately authorized infrastructure workflow. Do not commit token values or a Terraform state file.
 
-If GitHub Release creation succeeded but the R2 upload failed, add the missing
-environment credential and run the workflow's upload-only recovery path. It
-checks out the existing annotated tag, verifies the GitHub Release, rebuilds the
-exact bundle, and uploads it without creating or deleting a release:
+If GitHub Release creation succeeded but the R2 upload failed, add the missing environment credential and run the workflow's upload-only recovery path. It checks out the existing annotated tag, verifies the GitHub Release, rebuilds the exact bundle, and uploads it without creating or deleting a release:
 
 ```sh
 gh workflow run teacher-playground-release.yml \
@@ -52,8 +49,7 @@ gh workflow run teacher-playground-release.yml \
   -f version=0.18.1-tp.2
 ```
 
-The version input must match `x.y.z-tp.n`; arbitrary refs and paths are
-rejected.
+The version input must match `x.y.z-tp.n`; arbitrary refs and paths are rejected.
 
 ## Release layout and tag
 

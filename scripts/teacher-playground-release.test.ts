@@ -252,9 +252,7 @@ describe("teacher-playground Excalidraw release", () => {
     expect(releaseWorkflow).toMatch(
       /actions\/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a/,
     );
-    expect(releaseWorkflow).toMatch(
-      /actions\/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c/,
-    );
+    expect(releaseWorkflow).not.toMatch(/actions\/download-artifact/);
     expect(releaseWorkflow).not.toMatch(
       /actions\/upload-artifact@v4|actions\/download-artifact@v4/,
     );
@@ -291,9 +289,11 @@ describe("teacher-playground Excalidraw release", () => {
     expect(publishJob).toMatch(
       /actions\/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1/,
     );
+    expect(publishJob).not.toMatch(/actions\/download-artifact/);
     expect(publishJob).toMatch(
-      /actions\/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c/,
+      /gh run download "\$GITHUB_RUN_ID"[\s\S]*--repo "\$GITHUB_REPOSITORY"[\s\S]*--name[\s\S]*--dir release\/cdn/,
     );
+    expect(publishJob).toMatch(/GH_TOKEN:\s*\$\{\{ github\.token \}\}/);
     expect(publishJob).toMatch(/teacher-playground-r2-upload\.mjs/);
     expect(recoverJob).toMatch(/needs:\s+validate/);
   });

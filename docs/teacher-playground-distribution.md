@@ -73,13 +73,13 @@ GitHub Actions run `32700516708` completed the validation and GitHub Release cre
 
 After R2 is enabled and the fork `prod` environment has the same secret value used by the parent `prod` environment, run the upload-only recovery path. The secret value cannot be copied or read by this repository; coordinate its configuration without exposing it. The path checks out the existing annotated tag, verifies the GitHub Release, rebuilds the exact bundle, and uploads it without creating or deleting a release. This command is for an existing version only; it does not create a release:
 
-For the current `0.18.1-tp.3` release:
+For the current `0.18.1-tp.4` release:
 
 ```sh
 gh workflow run teacher-playground-release.yml \
   --repo EduardoSolanas/excalidraw \
   --ref teacher-playground/release-v0.18.1 \
-  -f version=0.18.1-tp.3
+  -f version=0.18.1-tp.4
 ```
 
 The version input must match `x.y.z-tp.n`; arbitrary refs and paths are rejected.
@@ -89,7 +89,7 @@ The version input must match `x.y.z-tp.n`; arbitrary refs and paths are rejected
 The current fork release uses the tag convention:
 
 ```text
-teacher-playground-v0.18.1-tp.3
+teacher-playground-v0.18.1-tp.4
 ```
 
 For a configured HTTPS custom domain, publish each release without overwriting older version paths:
@@ -109,7 +109,7 @@ Use Node 22 with Yarn 1.22.22 and the locked dependencies. The release command b
 ```sh
 npm install --global yarn@1.22.22 --no-fund --no-audit
 node scripts/yarn-install-quiet.mjs install --silent --frozen-lockfile --non-interactive
-yarn release:teacher-playground --tag teacher-playground-v0.18.1-tp.3
+yarn release:teacher-playground --tag teacher-playground-v0.18.1-tp.4
 ```
 
 The output is written below `release/cdn`. The GitHub Actions tag job uploads the same tree as a workflow artifact and GitHub Release, then `scripts/teacher-playground-r2-upload.mjs` publishes every versioned object through the Cloudflare R2 Upload Object API with immutable cache headers and updates only `latest.json` with no-cache headers. The uploader preserves nested object paths and limits concurrent requests.
@@ -119,7 +119,7 @@ The output is written below `release/cdn`. The GitHub Actions tag job uploads th
 Consumers that need this exact build can install the versioned tarball directly instead of a moving latest pointer:
 
 ```sh
-npm install https://cdn.example.com/releases/0.18.1-tp.3/package.tgz
+npm install https://cdn.example.com/releases/0.18.1-tp.4/package.tgz
 ```
 
 Use the URL for the chosen version and record it in the parent project’s lock file. Do not use `/latest.json` as an install URL; it is a release pointer, not a package archive.

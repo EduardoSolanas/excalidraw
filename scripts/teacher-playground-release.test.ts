@@ -1,6 +1,13 @@
 import { createHash } from "node:crypto";
 import { afterEach, describe, expect, it } from "vitest";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import {
+  mkdir,
+  mkdtemp,
+  readdir,
+  readFile,
+  rm,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -25,6 +32,69 @@ afterEach(async () => {
 });
 
 describe("teacher-playground Excalidraw release", () => {
+  it("does not ship Chinese locales or the Xiaolai font payload", async () => {
+    const distDirectory = path.resolve(
+      path.dirname(fileURLToPath(import.meta.url)),
+      "../packages/excalidraw/dist",
+    );
+    const files: string[] = [];
+    const visit = async (directory: string, prefix = "") => {
+      for (const entry of await readdir(directory, { withFileTypes: true })) {
+        const relativePath = prefix
+          ? path.join(prefix, entry.name)
+          : entry.name;
+        if (entry.isDirectory()) {
+          await visit(path.join(directory, entry.name), relativePath);
+        } else {
+          files.push(relativePath.split(path.sep).join("/"));
+        }
+      }
+    };
+    await visit(distDirectory);
+
+    expect(
+      files.some((file) => /\/locales\/zh-(?:CN|HK|TW)-/.test(`/${file}`)),
+    ).toBe(false);
+    expect(files.some((file) => /Xiaolai/.test(file))).toBe(false);
+    expect(
+      files.some((file) => /\/prod\/locales\/en-[^/]+\.js$/.test(`/${file}`)),
+    ).toBe(true);
+    expect(
+      files.some((file) =>
+        /\/prod\/locales\/es-ES-[^/]+\.js$/.test(`/${file}`),
+      ),
+    ).toBe(true);
+    const assetFiles = files.filter(
+      (file) => file.endsWith(".js") || file.endsWith(".css"),
+    );
+    for (const file of assetFiles) {
+      const asset = await readFile(path.join(distDirectory, file), "utf8");
+      expect(asset, file).not.toContain("Xiaolai-Regular-");
+      expect(asset, file).not.toContain("Xiaolai");
+    }
+  });
+
+  it("does not advertise Chinese locales or register the removed Xiaolai font", async () => {
+    const repositoryDirectory = path.resolve(
+      path.dirname(fileURLToPath(import.meta.url)),
+      "..",
+    );
+    const i18nSource = await readFile(
+      path.join(repositoryDirectory, "packages/excalidraw/i18n.ts"),
+      "utf8",
+    );
+    const fontsSource = await readFile(
+      path.join(repositoryDirectory, "packages/excalidraw/fonts/Fonts.ts"),
+      "utf8",
+    );
+
+    expect(i18nSource).not.toMatch(/code: "zh-(?:CN|TW)"/);
+    expect(i18nSource).toMatch(/code: "ja-JP"/);
+    expect(i18nSource).toMatch(/code: "ko-KR"/);
+    expect(fontsSource).not.toContain('from "./Xiaolai"');
+    expect(fontsSource).not.toMatch(/init\(CJK_HAND_DRAWN_FALLBACK_FONT/);
+  });
+
   it("uses the installed Yarn 1 contract instead of Corepack", async () => {
     const source = await readFile(
       path.resolve(
@@ -86,15 +156,15 @@ describe("teacher-playground Excalidraw release", () => {
       "utf8",
     );
 
-    expect(packageJson.version).toBe("0.18.1-tp.3");
-    expect(documentation).toContain("teacher-playground-v0.18.1-tp.3");
+    expect(packageJson.version).toBe("0.18.1-tp.4");
+    expect(documentation).toContain("teacher-playground-v0.18.1-tp.4");
     expect(documentation).toContain(
-      "yarn release:teacher-playground --tag teacher-playground-v0.18.1-tp.3",
+      "yarn release:teacher-playground --tag teacher-playground-v0.18.1-tp.4",
     );
     expect(documentation).toContain(
-      "npm install https://cdn.example.com/releases/0.18.1-tp.3/package.tgz",
+      "npm install https://cdn.example.com/releases/0.18.1-tp.4/package.tgz",
     );
-    expect(documentation).toContain("-f version=0.18.1-tp.3");
+    expect(documentation).toContain("-f version=0.18.1-tp.4");
     expect(documentation).toContain("GitHub Actions run `32700516708`");
     expect(documentation).toMatch(/GitHub Release\s+creation successfully/);
     expect(documentation).toMatch(/`publish-r2`\s+failed/);
@@ -106,7 +176,7 @@ describe("teacher-playground Excalidraw release", () => {
     );
     expect(documentation).not.toContain("live CDN is verified");
     expect(workflow).toContain(
-      'description: "Teacher Playground version to upload (for example 0.18.1-tp.3)"',
+      'description: "Teacher Playground version to upload (for example 0.18.1-tp.4)"',
     );
   });
 

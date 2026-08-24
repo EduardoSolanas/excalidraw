@@ -58,8 +58,6 @@ export const languages: Language[] = [
     { code: "sl-SI", label: "Slovenščina" },
     { code: "tr-TR", label: "Türkçe" },
     { code: "uk-UA", label: "Українська" },
-    { code: "zh-CN", label: "简体中文" },
-    { code: "zh-TW", label: "繁體中文" },
     { code: "vi-VN", label: "Tiếng Việt" },
     { code: "mr-IN", label: "मराठी" },
   ]

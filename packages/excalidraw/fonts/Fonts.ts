@@ -1,13 +1,10 @@
 import {
   FONT_FAMILY,
   FONT_FAMILY_FALLBACKS,
-  CJK_HAND_DRAWN_FALLBACK_FONT,
   WINDOWS_EMOJI_FALLBACK_FONT,
-  getFontFamilyFallbacks,
 } from "../constants";
 import { isTextElement } from "../element";
 import { getContainerElement } from "../element/textElement";
-import { containsCJK } from "../element/textWrapping";
 import { ShapeCache } from "../scene/ShapeCache";
 import { getFontString, PromisePool, promiseTry } from "../utils";
 import { ExcalidrawFontFace } from "./ExcalidrawFontFace";
@@ -21,7 +18,6 @@ import { LiberationFontFaces } from "./Liberation";
 import { LilitaFontFaces } from "./Lilita";
 import { NunitoFontFaces } from "./Nunito";
 import { VirgilFontFaces } from "./Virgil";
-import { XiaolaiFontFaces } from "./Xiaolai";
 
 import { FONT_METADATA, type FontMetadata } from "./FontMetadata";
 import type {
@@ -167,26 +163,6 @@ export class Fonts {
   ) {
     const families = Fonts.getUniqueFamilies(elements);
     const charsPerFamily = Fonts.getCharsPerFamily(elements);
-
-    // for simplicity, assuming we have just one family with the CJK handdrawn fallback
-    const familyWithCJK = families.find((x) =>
-      getFontFamilyFallbacks(x).includes(CJK_HAND_DRAWN_FALLBACK_FONT),
-    );
-
-    if (familyWithCJK) {
-      const characters = Fonts.getCharacters(charsPerFamily, familyWithCJK);
-
-      if (containsCJK(characters)) {
-        const family = FONT_FAMILY_FALLBACKS[CJK_HAND_DRAWN_FALLBACK_FONT];
-
-        // adding the same characters to the CJK handrawn family
-        charsPerFamily[family] = new Set(characters);
-
-        // the order between the families and fallbacks is important, as fallbacks need to be defined first and in the reversed order
-        // so that they get overriden with the later defined font faces, i.e. in case they share some codepoints
-        families.unshift(FONT_FAMILY_FALLBACKS[CJK_HAND_DRAWN_FALLBACK_FONT]);
-      }
-    }
 
     // don't trigger hundreds of concurrent requests (each performing fetch, creating a worker, etc.),
     // instead go three requests at a time, in a controlled manner, without completely blocking the main thread
@@ -384,7 +360,6 @@ export class Fonts {
     init("Virgil", ...VirgilFontFaces);
 
     // fallback font faces
-    init(CJK_HAND_DRAWN_FALLBACK_FONT, ...XiaolaiFontFaces);
     init(WINDOWS_EMOJI_FALLBACK_FONT, ...EmojiFontFaces);
 
     Fonts._initialized = true;

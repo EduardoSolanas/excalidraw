@@ -116,7 +116,6 @@ export const CLASSES = {
   SEARCH_MENU_INPUT_WRAPPER: "layer-ui__search-inputWrapper",
 };
 
-export const CJK_HAND_DRAWN_FALLBACK_FONT = "Xiaolai";
 export const WINDOWS_EMOJI_FALLBACK_FONT = "Segoe UI Emoji";
 
 /**
@@ -140,7 +139,6 @@ export const FONT_FAMILY = {
 };
 
 export const FONT_FAMILY_FALLBACKS = {
-  [CJK_HAND_DRAWN_FALLBACK_FONT]: 100,
   [WINDOWS_EMOJI_FALLBACK_FONT]: 1000,
 };
 
@@ -149,7 +147,7 @@ export const getFontFamilyFallbacks = (
 ): Array<keyof typeof FONT_FAMILY_FALLBACKS> => {
   switch (fontFamily) {
     case FONT_FAMILY.Excalifont:
-      return [CJK_HAND_DRAWN_FALLBACK_FONT, WINDOWS_EMOJI_FALLBACK_FONT];
+      return [WINDOWS_EMOJI_FALLBACK_FONT];
     default:
       return [WINDOWS_EMOJI_FALLBACK_FONT];
   }

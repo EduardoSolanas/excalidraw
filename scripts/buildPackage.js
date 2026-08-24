@@ -1,6 +1,7 @@
 const path = require("path");
 const { build } = require("esbuild");
 const { sassPlugin } = require("esbuild-sass-plugin");
+const { createSassPluginOptions } = require("./sassLogger");
 const { parseEnvVariables } = require("../packages/excalidraw/env.cjs");
 
 const ENV_VARS = {
@@ -21,7 +22,7 @@ const getConfig = (outdir) => ({
   splitting: true,
   format: "esm",
   packages: "external",
-  plugins: [sassPlugin()],
+  plugins: [sassPlugin(createSassPluginOptions())],
   target: "es2020",
   assetNames: "[dir]/[name]",
   chunkNames: "[dir]/[name]-[hash]",

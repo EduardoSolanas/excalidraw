@@ -1,6 +1,7 @@
 const path = require("path");
 const { build } = require("esbuild");
 const { sassPlugin } = require("esbuild-sass-plugin");
+const { createSassPluginOptions } = require("./sassLogger");
 
 // contains all dependencies bundled inside
 const getConfig = (outdir) => ({
@@ -20,7 +21,7 @@ const getConfig = (outdir) => ({
 function buildDev(config) {
   return build({
     ...config,
-    plugins: [sassPlugin()],
+    plugins: [sassPlugin(createSassPluginOptions())],
     sourcemap: true,
     define: {
       "import.meta.env": JSON.stringify({ DEV: true }),
@@ -31,7 +32,7 @@ function buildDev(config) {
 function buildProd(config) {
   return build({
     ...config,
-    plugins: [sassPlugin()],
+    plugins: [sassPlugin(createSassPluginOptions())],
     minify: true,
     define: {
       "import.meta.env": JSON.stringify({ PROD: true }),

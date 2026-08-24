@@ -1,6 +1,7 @@
 const path = require("path");
 const { build } = require("esbuild");
 const { sassPlugin } = require("esbuild-sass-plugin");
+const { createSassPluginOptions } = require("./sassLogger");
 const { woff2ServerPlugin } = require("./woff2/woff2-esbuild-plugins");
 
 // contains all dependencies bundled inside
@@ -22,7 +23,7 @@ function buildDev(config) {
   return build({
     ...config,
     sourcemap: true,
-    plugins: [sassPlugin(), woff2ServerPlugin()],
+    plugins: [sassPlugin(createSassPluginOptions()), woff2ServerPlugin()],
     define: {
       "import.meta.env": JSON.stringify({ DEV: true }),
     },
@@ -34,7 +35,7 @@ function buildProd(config) {
     ...config,
     minify: true,
     plugins: [
-      sassPlugin(),
+      sassPlugin(createSassPluginOptions()),
       woff2ServerPlugin({
         outdir: `${config.outdir}/assets`,
       }),

@@ -18,14 +18,14 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         with:
           node-version: 22.x
-      - name: Enable Corepack
-        run: corepack enable
+      - name: Install Yarn 1.22.22
+        run: npm install --global yarn@1.22.22 --no-fund --no-audit
       - name: Install locked dependencies
-        run: yarn install --frozen-lockfile --non-interactive
+        run: yarn install --silent --frozen-lockfile --non-interactive
       - name: Typecheck
         run: yarn test:typecheck
       - name: Lint and formatting
@@ -45,20 +45,20 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         with:
           node-version: 22.x
-      - name: Enable Corepack
-        run: corepack enable
+      - name: Install Yarn 1.22.22
+        run: npm install --global yarn@1.22.22 --no-fund --no-audit
       - name: Install locked dependencies
-        run: yarn install --frozen-lockfile --non-interactive
+        run: yarn install --silent --frozen-lockfile --non-interactive
       - name: Build and prepare release bundle
         env:
           RELEASE_TAG: ${{ github.ref_name }}
         run: yarn release:teacher-playground --tag "$RELEASE_TAG"
       - name: Upload release bundle artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: teacher-playground-excalidraw-${{ github.ref_name }}
           path: release/cdn
@@ -85,9 +85,9 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - name: Download release bundle artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           name: teacher-playground-excalidraw-${{ github.ref_name }}
           path: release/cdn
@@ -122,7 +122,7 @@ jobs:
           release_tag="teacher-playground-v$VERSION"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "release_tag=$release_tag" >> "$GITHUB_OUTPUT"
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           ref: ${{ steps.validate.outputs.release_tag }}
       - name: Verify existing GitHub Release
@@ -130,13 +130,13 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ steps.validate.outputs.release_tag }}
         run: gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         with:
           node-version: 22.x
-      - name: Enable Corepack
-        run: corepack enable
+      - name: Install Yarn 1.22.22
+        run: npm install --global yarn@1.22.22 --no-fund --no-audit
       - name: Install locked dependencies
-        run: yarn install --frozen-lockfile --non-interactive
+        run: yarn install --silent --frozen-lockfile --non-interactive
       - name: Rebuild exact release bundle
         env:
           RELEASE_TAG: ${{ steps.validate.outputs.release_tag }}

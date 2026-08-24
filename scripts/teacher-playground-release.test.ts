@@ -11,6 +11,7 @@ import {
   validatePackageIdentity,
   validateReleaseTag,
 } from "./teacher-playground-release.mjs";
+import { createSassLogger } from "./sassLogger.js";
 
 const temporaryDirectories: string[] = [];
 
@@ -61,6 +62,53 @@ describe("teacher-playground Excalidraw release", () => {
     expect(validateWorkflow).toMatch(/yarn test:teacher-playground-release/);
     expect(validateWorkflow).toMatch(/yarn build:package/);
 
+    for (const workflow of [releaseWorkflow, validateWorkflow]) {
+      expect(workflow).toMatch(
+        /actions\/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1/,
+      );
+      expect(workflow).toMatch(
+        /actions\/setup-node@820762786026740c76f36085b0efc47a31fe5020/,
+      );
+      expect(workflow).not.toMatch(
+        /actions\/checkout@v4|actions\/setup-node@v4/,
+      );
+      expect(workflow).toMatch(/node-version:\s+22\.x/);
+      expect(workflow).toMatch(/Install Yarn 1\.22\.22/);
+      expect(workflow).toMatch(/npm install --global yarn@1\.22\.22/);
+      expect(workflow).toMatch(
+        /yarn install --silent --frozen-lockfile --non-interactive/,
+      );
+      expect(workflow).not.toMatch(/corepack enable/);
+    }
+    expect(releaseWorkflow).toMatch(
+      /actions\/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a/,
+    );
+    expect(releaseWorkflow).toMatch(
+      /actions\/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c/,
+    );
+    expect(releaseWorkflow).not.toMatch(
+      /actions\/upload-artifact@v4|actions\/download-artifact@v4/,
+    );
+    const packageJson = await readFile(
+      path.resolve(
+        path.dirname(fileURLToPath(import.meta.url)),
+        "../package.json",
+      ),
+      "utf8",
+    );
+    expect(packageJson).not.toMatch(/"strip-ansi"\s*:\s*"6\.0\.1"/);
+    const lockfile = await readFile(
+      path.resolve(
+        path.dirname(fileURLToPath(import.meta.url)),
+        "../yarn.lock",
+      ),
+      "utf8",
+    );
+    expect(lockfile).toMatch(/strip-ansi@\^7\.0\.1:[\s\S]*?version "7\./);
+    expect(lockfile).toMatch(
+      /strip-ansi@\^6\.0\.0, strip-ansi@\^6\.0\.1:[\s\S]*?version "6\./,
+    );
+
     expect(validateJob).toMatch(/yarn test:typecheck/);
     expect(validateJob).toMatch(/yarn test:code/);
     expect(validateJob).toMatch(/yarn test:other/);
@@ -71,8 +119,12 @@ describe("teacher-playground Excalidraw release", () => {
     expect(releaseJob).toMatch(/gh release create/);
     expect(releaseJob).not.toMatch(/teacher-playground-r2-upload/);
     expect(publishJob).toMatch(/needs:\s+release/);
-    expect(publishJob).toMatch(/actions\/checkout@v4/);
-    expect(publishJob).toMatch(/actions\/download-artifact@v4/);
+    expect(publishJob).toMatch(
+      /actions\/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1/,
+    );
+    expect(publishJob).toMatch(
+      /actions\/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c/,
+    );
     expect(publishJob).toMatch(/teacher-playground-r2-upload\.mjs/);
     expect(recoverJob).toMatch(/needs:\s+validate/);
   });
@@ -93,7 +145,7 @@ describe("teacher-playground Excalidraw release", () => {
       /release_tag="teacher-playground-v\$VERSION"[\s\S]*outputs\.release_tag/,
     );
     expect(workflow).toMatch(
-      /uses: actions\/checkout@v4[\s\S]*ref: \$\{\{ steps\.validate\.outputs\.release_tag \}\}/,
+      /uses: actions\/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1[\s\S]*ref: \$\{\{ steps\.validate\.outputs\.release_tag \}\}/,
     );
     expect(workflow).toMatch(
       /yarn release:teacher-playground --tag "\$RELEASE_TAG"[\s\S]*node scripts\/teacher-playground-r2-upload\.mjs/,
@@ -108,6 +160,29 @@ describe("teacher-playground Excalidraw release", () => {
     expect(() =>
       validateReleaseTag("teacher-playground-v0.18.1", "0.18.1-tp.2"),
     ).toThrow(/teacher-playground-v0\.18\.1-tp\.2/);
+  });
+
+  it("filters only Sass deprecations in CI and forwards other warnings", () => {
+    const warnings: Array<{ message: string; options?: unknown }> = [];
+    const logger = createSassLogger({
+      ci: true,
+      warn: (message, options) => warnings.push({ message, options }),
+    });
+    logger.warn("deprecated", { deprecation: true });
+    logger.warn("125 repetitive deprecation warnings omitted.\nRun in verbose mode to see all warnings.", {
+      deprecation: false,
+    });
+    logger.warn("ordinary", { deprecation: false });
+    expect(warnings).toEqual([
+      { message: "ordinary", options: { deprecation: false } },
+    ]);
+
+    const localWarnings: string[] = [];
+    createSassLogger({
+      ci: false,
+      warn: (message) => localWarnings.push(message),
+    }).warn("deprecated", { deprecation: true });
+    expect(localWarnings).toEqual(["deprecated"]);
   });
 
   it("accepts semver Teacher Playground fork versions", () => {

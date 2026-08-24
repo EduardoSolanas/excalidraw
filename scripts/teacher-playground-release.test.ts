@@ -12,7 +12,7 @@ import {
   validateReleaseTag,
 } from "./teacher-playground-release.mjs";
 import { createSassLogger } from "./sassLogger.js";
-import { shouldSuppressYarnPeerWarning } from "./yarn-install-quiet.mjs";
+import { shouldSuppressYarnInstallWarning } from "./yarn-install-quiet.mjs";
 
 const temporaryDirectories: string[] = [];
 
@@ -65,22 +65,34 @@ describe("teacher-playground Excalidraw release", () => {
 
   it("filters only Yarn peer warnings through the checked install wrapper", () => {
     expect(
-      shouldSuppressYarnPeerWarning(
+      shouldSuppressYarnInstallWarning(
         'warning "foo@1.0.0" has unmet peer dependency "bar@^1.0.0".',
       ),
     ).toBe(true);
     expect(
-      shouldSuppressYarnPeerWarning(
+      shouldSuppressYarnInstallWarning(
         'warning "foo@1.0.0" has incorrect peer dependency "bar@^1.0.0".',
       ),
     ).toBe(true);
     expect(
-      shouldSuppressYarnPeerWarning(
+      shouldSuppressYarnInstallWarning(
         "warning left-pad@1.3.0: Use String.prototype.padStart()",
       ),
     ).toBe(false);
     expect(
-      shouldSuppressYarnPeerWarning("error Command failed with exit code 1."),
+      shouldSuppressYarnInstallWarning(
+        "error Command failed with exit code 1.",
+      ),
+    ).toBe(false);
+    expect(
+      shouldSuppressYarnInstallWarning(
+        'warning vscode-languageclient@7.0.0: The engine "vscode" appears to be invalid.',
+      ),
+    ).toBe(true);
+    expect(
+      shouldSuppressYarnInstallWarning(
+        'warning unrelated-package@1.0.0: The engine "vscode" appears to be invalid.',
+      ),
     ).toBe(false);
   });
 

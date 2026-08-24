@@ -2,9 +2,11 @@ import { spawn } from "node:child_process";
 
 const peerWarningPattern =
   /^warning .* has (?:unmet|incorrect) peer dependency /;
+const vscodeEngineWarningPattern =
+  /^warning vscode-languageclient@\S+: The engine "vscode" appears to be invalid\.$/;
 
-export function shouldSuppressYarnPeerWarning(line) {
-  return peerWarningPattern.test(line);
+export function shouldSuppressYarnInstallWarning(line) {
+  return peerWarningPattern.test(line) || vscodeEngineWarningPattern.test(line);
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
@@ -18,14 +20,14 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     const lines = pending.split(/\r?\n/);
     pending = lines.pop() ?? "";
     for (const line of lines) {
-      if (!shouldSuppressYarnPeerWarning(line)) {
+      if (!shouldSuppressYarnInstallWarning(line)) {
         process.stderr.write(`${line}\n`);
       }
     }
   });
 
   child.on("close", (code, signal) => {
-    if (pending && !shouldSuppressYarnPeerWarning(pending)) {
+    if (pending && !shouldSuppressYarnInstallWarning(pending)) {
       process.stderr.write(pending);
     }
     if (signal) {

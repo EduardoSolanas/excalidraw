@@ -11,7 +11,7 @@ A request to the Cloudflare API (/accounts/{account_id}/r2/buckets) failed.
 Please enable R2 through the Cloudflare Dashboard. [code: 10042]
 ```
 
-Activation is a dashboard action by an account owner and requires a payment method on file, even though the first 10 GB per month are free. Checked on 2026-08-24 against the Teacher Playground deployment account, R2 is **not** enabled, so no bucket, custom domain, or object described in this document exists yet. Confirm activation before running Terraform or dispatching the release workflow:
+Activation is a dashboard action by an account owner and requires a payment method on file, even though the first 10 GB per month are free. This repository does not contain live Cloudflare state or credentials, so the current enabled/bucket/domain status cannot be verified here. Confirm activation and the target account before running Terraform or dispatching the release workflow:
 
 ```sh
 CLOUDFLARE_ACCOUNT_ID=YOUR_CLOUDFLARE_ACCOUNT_ID npx wrangler r2 bucket list
@@ -21,7 +21,7 @@ One release is roughly 73 MB, so the free tier holds well over a hundred version
 
 ## Provision the R2 distribution
 
-Run Terraform from the infrastructure directory. The provider reads the `CLOUDFLARE_API_TOKEN` environment variable; use a token with R2 Storage Write and, when using `cdn_domain`, the permissions required by the R2 custom-domain resource.
+Run Terraform from the infrastructure directory. The provider reads the `CLOUDFLARE_API_TOKEN` environment variable. Use a token with R2 Storage Read/Write and R2 custom-domain Read/Write permissions. The default custom domain also performs a `cloudflare_zone` lookup, so the token must include Zone Zone Read for the configured account; R2 Storage Write alone is insufficient.
 
 ```sh
 cd infra/cloudflare
@@ -29,51 +29,49 @@ export CLOUDFLARE_API_TOKEN='set-this-in-your-shell-or-ci-secret-store'
 terraform init
 terraform plan \
   -var='account_id=YOUR_CLOUDFLARE_ACCOUNT_ID' \
-  -var='zone_id=YOUR_CLOUDFLARE_ZONE_ID' \
+  -var='zone_name=example.com' \
   -var='cdn_domain=cdn.example.com'
 terraform apply \
   -var='account_id=YOUR_CLOUDFLARE_ACCOUNT_ID' \
-  -var='zone_id=YOUR_CLOUDFLARE_ZONE_ID' \
+  -var='zone_name=example.com' \
   -var='cdn_domain=cdn.example.com'
 ```
 
-`zone_id` and `cdn_domain` are optional together. Omit both to provision only the bucket and its CORS policy. `bucket_name` defaults to `teacher-playground-excalidraw`; pass `-var='bucket_name=...'` when a different name is required. Review the plan before applying it. The bucket has `prevent_destroy` enabled, and there is no object-expiration rule: immutable release objects are retained until an intentional, separately reviewed retention process is chosen.
+The defaults are `zone_name=sen-tutor.co.uk` and `cdn_domain=excalidraw-assets.sen-tutor.co.uk`; Terraform looks up the zone ID from the account and needs no separate zone-ID credential. Override both values for another zone/domain, or pass `-var='cdn_domain=null'` for bucket-only provisioning. `bucket_name` defaults to `teacher-playground-excalidraw`; pass `-var='bucket_name=...'` when a different name is required. Review the plan before applying it. The bucket has `prevent_destroy` enabled, and there is no object-expiration rule: immutable release objects are retained until an intentional, separately reviewed retention process is chosen.
 
-## One bucket, three writers — pick an owner
+## One bucket, one owner
 
-`teacher-playground-excalidraw` is currently reconciled from three independent places, and none of them knows about the other two:
+This fork is the sole owner of the bucket, CORS policy, custom domain, and release objects:
 
 | Writer | Location | Mechanism |
 | --- | --- | --- |
 | This fork | `infra/cloudflare` (here) | Terraform, `cdn_domain` optional |
-| The parent app | `infra/cloudflare/excalidraw-cdn` | Terraform, hostname hardcoded to `excalidraw-assets.sen-tutor.co.uk` |
-| The parent app's deploy | `scripts/excalidraw-cdn.mjs reconcile` | imperative Cloudflare REST calls on every deploy |
+| The parent app | consumer configuration only | installs the immutable package/distribution URL; it must not provision or upload this bucket |
 
-Both Terraform stacks declare `prevent_destroy` on the same bucket name, so whichever applies second either adopts a resource it did not create or reports a conflict. The deploy script creates the bucket, CORS rule, and custom domain outright when they are absent, which means an ordinary deploy can bring the bucket into existence behind both Terraform states and leave each of them describing infrastructure it does not own.
-
-The object keys overlap as well. This fork publishes `releases/<version>/dist/**`, and because the package's `dist` tree contains `prod`, its objects land on exactly the keys the parent uploader writes from `node_modules/@teacher-playground/excalidraw/dist/prod`. Both also write `latest.json` at the bucket root. Objects documented as immutable can therefore be rewritten by the other publisher, and the surviving `latest.json` is simply whichever ran last.
-
-Nothing here is broken today, because nothing has run — R2 is not enabled. That makes this the moment to choose, before state exists to reconcile. Pick one owner for the bucket, its CORS policy, and its custom domain, and reduce the other two to publishers that upload objects and assume the container already exists. The parent's `DEPLOY.md` records the same conflict from the application side.
+The parent application must not carry a second Terraform stack or an imperative `reconcile`/upload path for this bucket. Its deploy only consumes the published immutable URL. This prevents competing state, overwrites under `releases/<version>/`, and conflicting root `latest.json` metadata. No live Cloudflare deployment is implied by this ownership decision; provision and verify the fork-owned resources separately.
 
 ## GitHub configuration
 
-The fork repository is `EduardoSolanas/excalidraw`. Its release branch is `teacher-playground/release-v0.18.1`; `upstream` remains the original Excalidraw repository and `origin` is the Teacher Playground fork. Push the verified branch, then push the exact annotated tag to start the release workflow:
+The fork repository is `EduardoSolanas/excalidraw`. `upstream` remains the original Excalidraw repository and `origin` is the Teacher Playground fork. For a new release, update the package version on the verified release branch, create an annotated tag matching `teacher-playground-v<version>`, and push that tag to start the release workflow. The historical `0.18.1-tp.2` tag already exists; do not force-push or reuse it:
 
 ```sh
 git push origin teacher-playground/release-v0.18.1
-git push origin teacher-playground-v0.18.1-tp.2
+git tag -a teacher-playground-v<VERSION> -m "Teacher Playground Excalidraw <VERSION>"
+git push origin teacher-playground-v<VERSION>
 ```
 
 Branch and pull-request pushes run the validation workflow only. The tag workflow repeats the package identity, release assembly, type, lint, formatting, and production package-build gates before creating a GitHub Release containing the package tarball, checksums, manifest, and `latest.json`. Cloudflare publishing runs afterwards as the separate `publish-r2` job, so an R2 failure remains visible without making the completed GitHub Release job appear skipped or failed.
 
 The `publish-r2` job uses the existing playground CI contract: it runs in the `prod` environment and uploads through Cloudflare's authenticated R2 REST API. Configure these exact GitHub environment values:
 
-- secret `CLOUDFLARE_API_TOKEN` — a Cloudflare API token with permission to write R2 objects.
+- secret `CLOUDFLARE_API_TOKEN` — a Cloudflare API token with permission to write R2 objects. Terraform provisioning additionally requires R2 custom-domain Read/Write and Zone Zone Read for the configured zone lookup.
 - variable `CLOUDFLARE_ACCOUNT_ID` — the account that owns the R2 bucket.
 
 The uploader targets the fixed Terraform bucket `teacher-playground-excalidraw`; no S3 access-key or secret-key pair is required. A missing token or account variable fails the tagged release job clearly after the GitHub Release assets are created, so the bundle remains downloadable while the CDN status is visibly red. Terraform provisioning uses the same `CLOUDFLARE_API_TOKEN` locally or in a separately authorized infrastructure workflow. Do not commit token values or a Terraform state file.
 
-If GitHub Release creation succeeded but the R2 upload failed, add the missing environment credential and run the workflow's upload-only recovery path. It checks out the existing annotated tag, verifies the GitHub Release, rebuilds the exact bundle, and uploads it without creating or deleting a release:
+If GitHub Release creation succeeded but the R2 upload failed, add the missing environment credential and run the workflow's upload-only recovery path. It checks out the existing annotated tag, verifies the GitHub Release, rebuilds the exact bundle, and uploads it without creating or deleting a release. This command is for an existing version only; it does not create a release:
+
+For the historical `0.18.1-tp.2` release only:
 
 ```sh
 gh workflow run teacher-playground-release.yml \
@@ -89,7 +87,7 @@ The version input must match `x.y.z-tp.n`; arbitrary refs and paths are rejected
 The current fork release uses the tag convention:
 
 ```text
-teacher-playground-v0.18.1-tp.2
+teacher-playground-v0.18.1-tp.3
 ```
 
 For a configured HTTPS custom domain, publish each release without overwriting older version paths:
@@ -104,12 +102,12 @@ https://cdn.example.com/latest.json
 
 ## Local bundle expectation
 
-Use Node 22 with Corepack and the locked Yarn dependencies. The release command builds the package, creates the npm tarball, copies the full browser distribution, and writes `manifest.json`, `SHA256SUMS`, and `latest.json`:
+Use Node 22 with Yarn 1.22.22 and the locked dependencies. The release command builds the package, creates the npm tarball, copies the full browser distribution, and writes `manifest.json`, `SHA256SUMS`, and `latest.json`:
 
 ```sh
-corepack enable
-yarn install --frozen-lockfile --non-interactive
-yarn release:teacher-playground --tag teacher-playground-v0.18.1-tp.2
+npm install --global yarn@1.22.22 --no-fund --no-audit
+node scripts/yarn-install-quiet.mjs install --silent --frozen-lockfile --non-interactive
+yarn release:teacher-playground --tag teacher-playground-v0.18.1-tp.3
 ```
 
 The output is written below `release/cdn`. The GitHub Actions tag job uploads the same tree as a workflow artifact and GitHub Release, then `scripts/teacher-playground-r2-upload.mjs` publishes every versioned object through the Cloudflare R2 Upload Object API with immutable cache headers and updates only `latest.json` with no-cache headers. The uploader preserves nested object paths and limits concurrent requests.
@@ -119,7 +117,7 @@ The output is written below `release/cdn`. The GitHub Actions tag job uploads th
 Consumers that need this exact build can install the versioned tarball directly instead of a moving latest pointer:
 
 ```sh
-npm install https://cdn.example.com/releases/0.18.1-tp.2/package.tgz
+npm install https://cdn.example.com/releases/0.18.1-tp.3/package.tgz
 ```
 
 Use the URL for the chosen version and record it in the parent project’s lock file. Do not use `/latest.json` as an install URL; it is a release pointer, not a package archive.

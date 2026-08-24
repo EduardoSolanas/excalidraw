@@ -2,6 +2,15 @@ locals {
   custom_domain_enabled = var.cdn_domain != null && trimspace(var.cdn_domain) != ""
 }
 
+data "cloudflare_zone" "distribution" {
+  count = local.custom_domain_enabled ? 1 : 0
+
+  filter = {
+    name    = var.zone_name
+    account = { id = var.account_id }
+  }
+}
+
 resource "cloudflare_r2_bucket" "releases" {
   account_id    = var.account_id
   name          = var.bucket_name
@@ -39,12 +48,12 @@ resource "cloudflare_r2_custom_domain" "distribution" {
   domain      = var.cdn_domain
   enabled     = true
   min_tls     = "1.2"
-  zone_id     = coalesce(var.zone_id, "")
+  zone_id     = data.cloudflare_zone.distribution[0].id
 
   lifecycle {
     precondition {
-      condition     = var.zone_id != null && trimspace(var.zone_id) != ""
-      error_message = "zone_id is required when cdn_domain is configured."
+      condition     = trimspace(var.zone_name) != ""
+      error_message = "zone_name is required when cdn_domain is configured."
     }
   }
 }

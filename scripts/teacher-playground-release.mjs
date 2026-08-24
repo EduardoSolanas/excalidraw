@@ -192,9 +192,8 @@ const run = async () => {
       await ensureDistPresent(packageDirectory);
     } else {
       runCommand(
-        "corepack",
+        "yarn",
         [
-          "yarn",
           ...(process.platform === "win32" ? ["--ignore-engines"] : []),
           "build:package",
         ],

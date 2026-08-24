@@ -8,15 +8,14 @@ variable "account_id" {
   }
 }
 
-variable "zone_id" {
-  description = "Cloudflare zone ID for the optional R2 custom domain."
+variable "zone_name" {
+  description = "Cloudflare zone containing the R2 custom domain."
   type        = string
-  default     = null
-  nullable    = true
+  default     = "sen-tutor.co.uk"
 
   validation {
-    condition     = var.zone_id == null || trimspace(var.zone_id) != ""
-    error_message = "zone_id must not be empty when supplied."
+    condition     = trimspace(var.zone_name) != ""
+    error_message = "zone_name must not be empty."
   }
 }
 
@@ -34,7 +33,7 @@ variable "bucket_name" {
 variable "cdn_domain" {
   description = "Optional custom hostname for the public R2 distribution."
   type        = string
-  default     = null
+  default     = "excalidraw-assets.sen-tutor.co.uk"
   nullable    = true
 
   validation {

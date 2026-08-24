@@ -25,6 +25,103 @@ afterEach(async () => {
 });
 
 describe("teacher-playground Excalidraw release", () => {
+  it("uses the installed Yarn 1 contract instead of Corepack", async () => {
+    const source = await readFile(
+      path.resolve(
+        path.dirname(fileURLToPath(import.meta.url)),
+        "./teacher-playground-release.mjs",
+      ),
+      "utf8",
+    );
+    expect(source).not.toMatch(/corepack/);
+    expect(source).toMatch(/runCommand\(\s*"yarn"[\s\S]*"build:package"/);
+  });
+
+  it("documents the fork-owned distribution contract", async () => {
+    const documentation = await readFile(
+      path.resolve(
+        path.dirname(fileURLToPath(import.meta.url)),
+        "../docs/teacher-playground-distribution.md",
+      ),
+      "utf8",
+    );
+    expect(documentation).toMatch(/## One bucket, one owner/);
+    expect(documentation).toMatch(/sole owner of the bucket/);
+    expect(documentation).toMatch(/must not provision or upload this bucket/);
+    expect(documentation).not.toMatch(/pick an owner/);
+    expect(documentation).not.toMatch(/corepack enable/);
+    expect(documentation).toMatch(/npm install --global yarn@1\.22\.22/);
+    expect(documentation).toMatch(/zone_name=sen-tutor\.co\.uk/);
+    expect(documentation).toMatch(
+      /cdn_domain=excalidraw-assets\.sen-tutor\.co\.uk/,
+    );
+    expect(documentation).toMatch(/cdn_domain=null/);
+    expect(documentation).toMatch(/Zone Zone Read/);
+    expect(documentation).toMatch(/R2 Storage Write alone is insufficient/);
+    expect(documentation).toMatch(
+      /historical `0\.18\.1-tp\.2` tag already exists/,
+    );
+  });
+
+  it("targets the next immutable Teacher Playground release", async () => {
+    const repositoryDirectory = path.resolve(
+      path.dirname(fileURLToPath(import.meta.url)),
+      "..",
+    );
+    const packageJson = JSON.parse(
+      await readFile(
+        path.join(repositoryDirectory, "packages/excalidraw/package.json"),
+        "utf8",
+      ),
+    ) as { version: string };
+    const documentation = await readFile(
+      path.join(repositoryDirectory, "docs/teacher-playground-distribution.md"),
+      "utf8",
+    );
+    const workflow = await readFile(
+      path.join(
+        repositoryDirectory,
+        ".github/workflows/teacher-playground-release.yml",
+      ),
+      "utf8",
+    );
+
+    expect(packageJson.version).toBe("0.18.1-tp.3");
+    expect(documentation).toContain("teacher-playground-v0.18.1-tp.3");
+    expect(documentation).toContain(
+      "yarn release:teacher-playground --tag teacher-playground-v0.18.1-tp.3",
+    );
+    expect(documentation).toContain(
+      "npm install https://cdn.example.com/releases/0.18.1-tp.3/package.tgz",
+    );
+    expect(documentation).toContain(
+      "historical `0.18.1-tp.2` tag already exists",
+    );
+    expect(documentation).toContain("-f version=0.18.1-tp.2");
+    expect(workflow).toContain(
+      'description: "Teacher Playground version to upload (for example 0.18.1-tp.3)"',
+    );
+  });
+
+  it("keeps the default Terraform domain on the fork-owned zone", async () => {
+    const infraDirectory = path.resolve(
+      path.dirname(fileURLToPath(import.meta.url)),
+      "../infra/cloudflare",
+    );
+    const variables = await readFile(
+      path.join(infraDirectory, "variables.tf"),
+      "utf8",
+    );
+    const main = await readFile(path.join(infraDirectory, "main.tf"), "utf8");
+    expect(variables).toMatch(/variable "zone_name"/);
+    expect(variables).toMatch(/default\s*=\s*"sen-tutor\.co\.uk"/);
+    expect(variables).toMatch(
+      /default\s*=\s*"excalidraw-assets\.sen-tutor\.co\.uk"/,
+    );
+    expect(main).toMatch(/data "cloudflare_zone"/);
+    expect(main).toMatch(/zone_id\s*=\s*data\.cloudflare_zone/);
+  });
+
   it("keeps inherited CI workflows on immutable current actions and quiet installs", async () => {
     const workflowDirectory = path.resolve(
       path.dirname(fileURLToPath(import.meta.url)),

@@ -7,6 +7,25 @@ const DEFAULT_ENDPOINT = "https://api.cloudflare.com/client/v4";
 const RELEASE_CACHE_CONTROL = "public,max-age=31536000,immutable";
 const LATEST_CACHE_CONTROL = "no-cache,no-store,must-revalidate";
 
+const CONTENT_TYPES = {
+  ".css": "text/css; charset=utf-8",
+  ".json": "application/json",
+  ".map": "application/json",
+  ".js": "text/javascript; charset=utf-8",
+  ".mjs": "text/javascript; charset=utf-8",
+  ".png": "image/png",
+  ".svg": "image/svg+xml",
+  ".tgz": "application/gzip",
+  ".ts": "text/plain; charset=utf-8",
+  ".ttf": "font/ttf",
+  ".txt": "text/plain; charset=utf-8",
+  ".woff": "font/woff",
+  ".woff2": "font/woff2",
+};
+
+export const contentTypeForObjectKey = (key) =>
+  CONTENT_TYPES[path.extname(key).toLowerCase()] || "application/octet-stream";
+
 const listFiles = async (directory, prefix = "") => {
   const entries = (await readdir(directory, { withFileTypes: true })).sort(
     (left, right) => left.name.localeCompare(right.name),
@@ -64,9 +83,7 @@ const uploadObject = async ({
     headers: {
       Authorization: `Bearer ${apiToken}`,
       "Cache-Control": cacheControl,
-      "Content-Type": key.endsWith(".json")
-        ? "application/json"
-        : "application/octet-stream",
+      "Content-Type": contentTypeForObjectKey(key),
     },
     body: await readFile(filePath),
   });

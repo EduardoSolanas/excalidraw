@@ -4,7 +4,10 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { uploadReleaseToR2 } from "./teacher-playground-r2-upload.mjs";
+import {
+  contentTypeForObjectKey,
+  uploadReleaseToR2,
+} from "./teacher-playground-r2-upload.mjs";
 
 const temporaryDirectories: string[] = [];
 const servers: Server[] = [];
@@ -35,6 +38,35 @@ const listen = async (server: Server) => {
 };
 
 describe("teacher-playground Cloudflare R2 upload", () => {
+  it("uses browser-safe content types for published objects", () => {
+    expect(contentTypeForObjectKey("app.js")).toBe(
+      "text/javascript; charset=utf-8",
+    );
+    expect(contentTypeForObjectKey("module.mjs")).toBe(
+      "text/javascript; charset=utf-8",
+    );
+    expect(contentTypeForObjectKey("styles.css")).toBe(
+      "text/css; charset=utf-8",
+    );
+    expect(contentTypeForObjectKey("manifest.json")).toBe("application/json");
+    expect(contentTypeForObjectKey("bundle.js.map")).toBe("application/json");
+    expect(contentTypeForObjectKey("icon.svg")).toBe("image/svg+xml");
+    expect(contentTypeForObjectKey("icon.png")).toBe("image/png");
+    expect(contentTypeForObjectKey("font.woff")).toBe("font/woff");
+    expect(contentTypeForObjectKey("font.woff2")).toBe("font/woff2");
+    expect(contentTypeForObjectKey("font.ttf")).toBe("font/ttf");
+    expect(contentTypeForObjectKey("notes.txt")).toBe(
+      "text/plain; charset=utf-8",
+    );
+    expect(contentTypeForObjectKey("types.ts")).toBe(
+      "text/plain; charset=utf-8",
+    );
+    expect(contentTypeForObjectKey("package.tgz")).toBe("application/gzip");
+    expect(contentTypeForObjectKey("asset.bin")).toBe(
+      "application/octet-stream",
+    );
+  });
+
   it("uploads release files and latest metadata through the authenticated R2 API", async () => {
     const workspace = await mkdtemp(
       path.join(tmpdir(), "teacher-playground-r2-upload-"),
@@ -58,6 +90,7 @@ describe("teacher-playground Cloudflare R2 upload", () => {
     const requests: Array<{
       body: Buffer;
       cacheControl: string | undefined;
+      contentType: string | undefined;
       path: string;
       token: string | undefined;
     }> = [];
@@ -68,6 +101,7 @@ describe("teacher-playground Cloudflare R2 upload", () => {
         requests.push({
           body: Buffer.concat(chunks),
           cacheControl: request.headers["cache-control"],
+          contentType: request.headers["content-type"],
           path: request.url ?? "",
           token: request.headers.authorization,
         });
@@ -94,6 +128,7 @@ describe("teacher-playground Cloudflare R2 upload", () => {
     );
     expect(releaseRequest).toMatchObject({
       cacheControl: "public,max-age=31536000,immutable",
+      contentType: "text/javascript; charset=utf-8",
       token: "Bearer token-456",
     });
     expect(releaseRequest?.body).toEqual(Buffer.from("release bytes\n"));
@@ -104,6 +139,7 @@ describe("teacher-playground Cloudflare R2 upload", () => {
     );
     expect(latestRequest).toMatchObject({
       cacheControl: "no-cache,no-store,must-revalidate",
+      contentType: "application/json",
       token: "Bearer token-456",
     });
     expect(latestRequest?.body).toEqual(

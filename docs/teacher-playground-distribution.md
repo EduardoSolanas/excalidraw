@@ -69,15 +69,17 @@ The `publish-r2` job uses the existing playground CI contract: it runs in the `p
 
 The uploader targets the fixed Terraform bucket `teacher-playground-excalidraw`; no S3 access-key or secret-key pair is required. A missing token or account variable fails the tagged release job clearly after the GitHub Release assets are created, so the bundle remains downloadable while the CDN status is visibly red. Terraform provisioning uses the same `CLOUDFLARE_API_TOKEN` locally or in a separately authorized infrastructure workflow. Do not commit token values or a Terraform state file.
 
-If GitHub Release creation succeeded but the R2 upload failed, add the missing environment credential and run the workflow's upload-only recovery path. It checks out the existing annotated tag, verifies the GitHub Release, rebuilds the exact bundle, and uploads it without creating or deleting a release. This command is for an existing version only; it does not create a release:
+GitHub Actions run `32700516708` completed the validation and GitHub Release creation successfully, but `publish-r2` failed because the fork `prod` environment did not have `CLOUDFLARE_API_TOKEN`. The live R2 API also currently blocks provisioning with code 10042 (R2 must be enabled), and the custom domain remains unresolved. These are current blockers; no live CDN URL is claimed here.
 
-For the historical `0.18.1-tp.2` release only:
+After R2 is enabled and the fork `prod` environment has the same secret value used by the parent `prod` environment, run the upload-only recovery path. The secret value cannot be copied or read by this repository; coordinate its configuration without exposing it. The path checks out the existing annotated tag, verifies the GitHub Release, rebuilds the exact bundle, and uploads it without creating or deleting a release. This command is for an existing version only; it does not create a release:
+
+For the current `0.18.1-tp.3` release:
 
 ```sh
 gh workflow run teacher-playground-release.yml \
   --repo EduardoSolanas/excalidraw \
   --ref teacher-playground/release-v0.18.1 \
-  -f version=0.18.1-tp.2
+  -f version=0.18.1-tp.3
 ```
 
 The version input must match `x.y.z-tp.n`; arbitrary refs and paths are rejected.

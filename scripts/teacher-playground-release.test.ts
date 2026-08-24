@@ -94,10 +94,17 @@ describe("teacher-playground Excalidraw release", () => {
     expect(documentation).toContain(
       "npm install https://cdn.example.com/releases/0.18.1-tp.3/package.tgz",
     );
-    expect(documentation).toContain(
-      "historical `0.18.1-tp.2` tag already exists",
+    expect(documentation).toContain("-f version=0.18.1-tp.3");
+    expect(documentation).toContain("GitHub Actions run `32700516708`");
+    expect(documentation).toMatch(/GitHub Release\s+creation successfully/);
+    expect(documentation).toMatch(/`publish-r2`\s+failed/);
+    expect(documentation).toContain("CLOUDFLARE_API_TOKEN");
+    expect(documentation).toContain("code 10042");
+    expect(documentation).toMatch(/custom domain\s+remains unresolved/);
+    expect(documentation).toMatch(
+      /same secret value\s+used by the parent `prod` environment/,
     );
-    expect(documentation).toContain("-f version=0.18.1-tp.2");
+    expect(documentation).not.toContain("live CDN is verified");
     expect(workflow).toContain(
       'description: "Teacher Playground version to upload (for example 0.18.1-tp.3)"',
     );

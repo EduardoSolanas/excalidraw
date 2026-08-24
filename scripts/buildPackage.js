@@ -1,5 +1,4 @@
 const path = require("path");
-const { readdir, rm } = require("fs/promises");
 const { build } = require("esbuild");
 const { sassPlugin } = require("esbuild-sass-plugin");
 const { createSassPluginOptions } = require("./sassLogger");
@@ -73,25 +72,6 @@ const createESMRawBuild = async () => {
   await buildProd({
     ...getConfig("dist/prod"),
     ...chunksConfig,
-  });
-
-  await Promise.all([
-    pruneChineseAssets("dist/dev"),
-    pruneChineseAssets("dist/prod"),
-  ]);
-};
-
-const pruneChineseAssets = async (outdir) => {
-  const localesDirectory = path.join(outdir, "locales");
-  const localeFiles = await readdir(localesDirectory);
-  await Promise.all(
-    localeFiles
-      .filter((file) => /^zh-(?:CN|HK|TW)-/.test(file))
-      .map((file) => rm(path.join(localesDirectory, file), { force: true })),
-  );
-  await rm(path.join(outdir, "fonts", "Xiaolai"), {
-    recursive: true,
-    force: true,
   });
 };
 

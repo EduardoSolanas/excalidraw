@@ -95,6 +95,27 @@ describe("teacher-playground Excalidraw release", () => {
     expect(fontsSource).not.toMatch(/init\(CJK_HAND_DRAWN_FALLBACK_FONT/);
   });
 
+  it("does not retain Chinese locale sources or generated imports", async () => {
+    const repositoryDirectory = path.resolve(
+      path.dirname(fileURLToPath(import.meta.url)),
+      "..",
+    );
+    const localeDirectory = path.join(
+      repositoryDirectory,
+      "packages/excalidraw/locales",
+    );
+    const localeSources = await readdir(localeDirectory);
+    expect(localeSources).not.toEqual(
+      expect.arrayContaining(["zh-CN.json", "zh-HK.json", "zh-TW.json"]),
+    );
+
+    const distIndex = await readFile(
+      path.join(repositoryDirectory, "packages/excalidraw/dist/prod/index.js"),
+      "utf8",
+    );
+    expect(distIndex).not.toMatch(/locales\/zh-(?:CN|HK|TW)/);
+  });
+
   it("uses the installed Yarn 1 contract instead of Corepack", async () => {
     const source = await readFile(
       path.resolve(
@@ -156,25 +177,30 @@ describe("teacher-playground Excalidraw release", () => {
       "utf8",
     );
 
-    expect(packageJson.version).toBe("0.18.1-tp.5");
-    expect(documentation).toContain("teacher-playground-v0.18.1-tp.5");
+    expect(packageJson.version).toBe("0.18.1-tp.6");
+    expect(documentation).toContain("teacher-playground-v0.18.1-tp.6");
     expect(documentation).toContain(
-      "yarn release:teacher-playground --tag teacher-playground-v0.18.1-tp.5",
+      "yarn release:teacher-playground --tag teacher-playground-v0.18.1-tp.6",
     );
     expect(documentation).toContain(
-      "npm install https://cdn.example.com/releases/0.18.1-tp.5/package.tgz",
+      "npm install https://cdn.example.com/releases/0.18.1-tp.6/package.tgz",
     );
-    expect(documentation).toContain("-f version=0.18.1-tp.5");
+    expect(documentation).toContain("-f version=0.18.1-tp.6");
     expect(documentation).toContain("GitHub Actions run `32777157991`");
     expect(documentation).toMatch(
       /validation, GitHub Release, and `publish-r2`\s+jobs all passed/,
     );
-    expect(documentation).toContain("`latest.json` points to 0.18.1-tp.5");
+    expect(documentation).toContain(
+      "`latest.json` currently points to 0.18.1-tp.5",
+    );
+    expect(documentation).toContain(
+      "Version `0.18.1-tp.6` is the next immutable release",
+    );
     expect(documentation).toContain("9,448,232 bytes");
     expect(documentation).toContain("no zh-CN, zh-HK, or zh-TW locale assets");
     expect(documentation).toContain("no Xiaolai font payload");
     expect(workflow).toContain(
-      'description: "Teacher Playground version to upload (for example 0.18.1-tp.5)"',
+      'description: "Teacher Playground version to upload (for example 0.18.1-tp.6)"',
     );
     expect(workflow.indexOf("- name: Build package")).toBeLessThan(
       workflow.indexOf("- name: Release assembly tests"),

@@ -69,17 +69,17 @@ The `publish-r2` job uses the existing playground CI contract: it runs in the `p
 
 The uploader targets the fixed Terraform bucket `teacher-playground-excalidraw`; no S3 access-key or secret-key pair is required. A missing token or account variable fails the tagged release job clearly after the GitHub Release assets are created, so the bundle remains downloadable while the CDN status is visibly red. Terraform provisioning uses the same `CLOUDFLARE_API_TOKEN` locally or in a separately authorized infrastructure workflow. Do not commit token values or a Terraform state file.
 
-GitHub Actions run `32777157991` completed successfully: the validation, GitHub Release, and `publish-r2` jobs all passed for `0.18.1-tp.5`. `latest.json` points to 0.18.1-tp.5, and the public package tarball is 9,448,232 bytes. The release manifest and distribution contain no zh-CN, zh-HK, or zh-TW locale assets and no Xiaolai font payload.
+GitHub Actions run `32777157991` completed successfully: the validation, GitHub Release, and `publish-r2` jobs all passed for `0.18.1-tp.5`. `latest.json` currently points to 0.18.1-tp.5, and the public package tarball is 9,448,232 bytes. The release manifest and distribution contain no zh-CN, zh-HK, or zh-TW locale assets and no Xiaolai font payload. Version `0.18.1-tp.6` is the next immutable release and is not claimed live until its tagged workflow completes.
 
 For a future recovery, run the upload-only path with the fork `prod` environment configured. The secret value cannot be copied or read by this repository; coordinate its configuration without exposing it. The path checks out the existing annotated tag, verifies the GitHub Release, rebuilds the exact bundle, and uploads it without creating or deleting a release. This command is for an existing version only; it does not create a release:
 
-For the current `0.18.1-tp.5` release:
+For the current `0.18.1-tp.6` release:
 
 ```sh
 gh workflow run teacher-playground-release.yml \
   --repo EduardoSolanas/excalidraw \
   --ref teacher-playground/release-v0.18.1 \
-  -f version=0.18.1-tp.5
+  -f version=0.18.1-tp.6
 ```
 
 The version input must match `x.y.z-tp.n`; arbitrary refs and paths are rejected.
@@ -89,7 +89,7 @@ The version input must match `x.y.z-tp.n`; arbitrary refs and paths are rejected
 The current fork release uses the tag convention:
 
 ```text
-teacher-playground-v0.18.1-tp.5
+teacher-playground-v0.18.1-tp.6
 ```
 
 For a configured HTTPS custom domain, publish each release without overwriting older version paths:
@@ -109,7 +109,7 @@ Use Node 22 with Yarn 1.22.22 and the locked dependencies. The release command b
 ```sh
 npm install --global yarn@1.22.22 --no-fund --no-audit
 node scripts/yarn-install-quiet.mjs install --silent --frozen-lockfile --non-interactive
-yarn release:teacher-playground --tag teacher-playground-v0.18.1-tp.5
+yarn release:teacher-playground --tag teacher-playground-v0.18.1-tp.6
 ```
 
 The output is written below `release/cdn`. The GitHub Actions tag job uploads the same tree as a workflow artifact and GitHub Release, then `scripts/teacher-playground-r2-upload.mjs` publishes every versioned object through the Cloudflare R2 Upload Object API with immutable cache headers and updates only `latest.json` with no-cache headers. The uploader preserves nested object paths and limits concurrent requests.
@@ -119,7 +119,7 @@ The output is written below `release/cdn`. The GitHub Actions tag job uploads th
 Consumers that need this exact build can install the versioned tarball directly instead of a moving latest pointer:
 
 ```sh
-npm install https://cdn.example.com/releases/0.18.1-tp.5/package.tgz
+npm install https://cdn.example.com/releases/0.18.1-tp.6/package.tgz
 ```
 
 Use the URL for the chosen version and record it in the parent project’s lock file. Do not use `/latest.json` as an install URL; it is a release pointer, not a package archive.

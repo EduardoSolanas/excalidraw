@@ -1,6 +1,6 @@
 {
   "name": "@teacher-playground/excalidraw",
-  "version": "0.18.1-tp.5",
+  "version": "0.18.1-tp.6",
   "type": "module",
   "types": "./dist/types/excalidraw/index.d.ts",
   "main": "./dist/prod/index.js",
@@ -117,7 +117,7 @@
   "bugs": "https://github.com/EduardoSolanas/excalidraw/issues",
   "homepage": "https://github.com/EduardoSolanas/excalidraw/tree/teacher-playground/release-v0.18.1/packages/excalidraw",
   "scripts": {
-    "gen:types": "rimraf types && tsc && rimraf dist/types/excalidraw/fonts/Xiaolai",
+    "gen:types": "rimraf types && tsc",
     "build:esm": "rimraf dist && node ../../scripts/buildPackage.js && yarn gen:types"
   }
 }

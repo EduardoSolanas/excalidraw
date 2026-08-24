@@ -48,7 +48,7 @@ This fork is the sole owner of the bucket, CORS policy, custom domain, and relea
 | This fork | `infra/cloudflare` (here) | Terraform, `cdn_domain` optional |
 | The parent app | consumer configuration only | installs the immutable package/distribution URL; it must not provision or upload this bucket |
 
-The parent application must not carry a second Terraform stack or an imperative `reconcile`/upload path for this bucket. Its deploy only consumes the published immutable URL. This prevents competing state, overwrites under `releases/<version>/`, and conflicting root `latest.json` metadata. The fork-owned resources and current tp.5 release are live and verified.
+The parent application must not carry a second Terraform stack or an imperative `reconcile`/upload path for this bucket. Its deploy only consumes the published immutable URL. This prevents competing state, overwrites under `releases/<version>/`, and conflicting root `latest.json` metadata. The fork-owned resources and current tp.6 release are live and verified.
 
 ## GitHub configuration
 
@@ -69,7 +69,7 @@ The `publish-r2` job uses the existing playground CI contract: it runs in the `p
 
 The uploader targets the fixed Terraform bucket `teacher-playground-excalidraw`; no S3 access-key or secret-key pair is required. A missing token or account variable fails the tagged release job clearly after the GitHub Release assets are created, so the bundle remains downloadable while the CDN status is visibly red. Terraform provisioning uses the same `CLOUDFLARE_API_TOKEN` locally or in a separately authorized infrastructure workflow. Do not commit token values or a Terraform state file.
 
-GitHub Actions run `32777157991` completed successfully: the validation, GitHub Release, and `publish-r2` jobs all passed for `0.18.1-tp.5`. `latest.json` currently points to 0.18.1-tp.5, and the public package tarball is 9,448,232 bytes. The release manifest and distribution contain no zh-CN, zh-HK, or zh-TW locale assets and no Xiaolai font payload. Version `0.18.1-tp.6` is the next immutable release and is not claimed live until its tagged workflow completes.
+GitHub Actions run `32781207895` completed successfully: the validation, GitHub Release, and `publish-r2` jobs all passed for `0.18.1-tp.6`. `latest.json` currently points to 0.18.1-tp.6, and the public `package.tgz` is 9,445,242 bytes. The release manifest has zero paths matching zh-CN, zh-HK, zh-TW, or Xiaolai; Japanese and Korean assets are retained.
 
 For a future recovery, run the upload-only path with the fork `prod` environment configured. The secret value cannot be copied or read by this repository; coordinate its configuration without exposing it. The path checks out the existing annotated tag, verifies the GitHub Release, rebuilds the exact bundle, and uploads it without creating or deleting a release. This command is for an existing version only; it does not create a release:
 

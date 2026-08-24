@@ -186,19 +186,18 @@ describe("teacher-playground Excalidraw release", () => {
       "npm install https://cdn.example.com/releases/0.18.1-tp.6/package.tgz",
     );
     expect(documentation).toContain("-f version=0.18.1-tp.6");
-    expect(documentation).toContain("GitHub Actions run `32777157991`");
+    expect(documentation).toContain("GitHub Actions run `32781207895`");
     expect(documentation).toMatch(
       /validation, GitHub Release, and `publish-r2`\s+jobs all passed/,
     );
     expect(documentation).toContain(
-      "`latest.json` currently points to 0.18.1-tp.5",
+      "`latest.json` currently points to 0.18.1-tp.6",
     );
+    expect(documentation).toContain("9,445,242 bytes");
     expect(documentation).toContain(
-      "Version `0.18.1-tp.6` is the next immutable release",
+      "zero paths matching zh-CN, zh-HK, zh-TW, or Xiaolai",
     );
-    expect(documentation).toContain("9,448,232 bytes");
-    expect(documentation).toContain("no zh-CN, zh-HK, or zh-TW locale assets");
-    expect(documentation).toContain("no Xiaolai font payload");
+    expect(documentation).toContain("Japanese and Korean assets are retained");
     expect(workflow).toContain(
       'description: "Teacher Playground version to upload (for example 0.18.1-tp.6)"',
     );

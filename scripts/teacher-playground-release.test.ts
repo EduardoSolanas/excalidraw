@@ -156,15 +156,15 @@ describe("teacher-playground Excalidraw release", () => {
       "utf8",
     );
 
-    expect(packageJson.version).toBe("0.18.1-tp.4");
-    expect(documentation).toContain("teacher-playground-v0.18.1-tp.4");
+    expect(packageJson.version).toBe("0.18.1-tp.5");
+    expect(documentation).toContain("teacher-playground-v0.18.1-tp.5");
     expect(documentation).toContain(
-      "yarn release:teacher-playground --tag teacher-playground-v0.18.1-tp.4",
+      "yarn release:teacher-playground --tag teacher-playground-v0.18.1-tp.5",
     );
     expect(documentation).toContain(
-      "npm install https://cdn.example.com/releases/0.18.1-tp.4/package.tgz",
+      "npm install https://cdn.example.com/releases/0.18.1-tp.5/package.tgz",
     );
-    expect(documentation).toContain("-f version=0.18.1-tp.4");
+    expect(documentation).toContain("-f version=0.18.1-tp.5");
     expect(documentation).toContain("GitHub Actions run `32700516708`");
     expect(documentation).toMatch(/GitHub Release\s+creation successfully/);
     expect(documentation).toMatch(/`publish-r2`\s+failed/);
@@ -176,7 +176,10 @@ describe("teacher-playground Excalidraw release", () => {
     );
     expect(documentation).not.toContain("live CDN is verified");
     expect(workflow).toContain(
-      'description: "Teacher Playground version to upload (for example 0.18.1-tp.4)"',
+      'description: "Teacher Playground version to upload (for example 0.18.1-tp.5)"',
+    );
+    expect(workflow.indexOf("- name: Build package")).toBeLessThan(
+      workflow.indexOf("- name: Release assembly tests"),
     );
   });
 

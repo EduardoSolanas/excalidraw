@@ -10,14 +10,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           token: ${{ secrets.PUSH_TRANSLATIONS_COVERAGE_PAT }}
 
-      - name: Setup Node.js 18.x
-        uses: actions/setup-node@v2
+      - name: Setup Node.js 22.x
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 18.x
+          node-version: 22.x
+
+      - name: Install Yarn 1.22.22
+        run: npm install --global yarn@1.22.22 --no-fund --no-audit
 
       - name: Create report file
         run: |
@@ -37,10 +40,10 @@ jobs:
           body="${body//'%'/'%25'}"
           body="${body//$'\n'/'%0A'}"
           body="${body//$'\r'/'%0D'}"
-          echo ::set-output name=body::$body
+          echo "body=$body" >> "$GITHUB_OUTPUT"
 
       - name: Update description with coverage
-        uses: kt3k/update-pr-description@v1.0.1
+        uses: kt3k/update-pr-description@46409be4b4fb57502e7a0c40a317d79b21a548dd # v2.1.1
         with:
           pr_body: ${{ steps.getCommentBody.outputs.body }}
           pr_title: "chore: Update translations from Crowdin"

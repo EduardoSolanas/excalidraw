@@ -12,6 +12,7 @@ import {
   validateReleaseTag,
 } from "./teacher-playground-release.mjs";
 import { createSassLogger } from "./sassLogger.js";
+import { shouldSuppressYarnPeerWarning } from "./yarn-install-quiet.mjs";
 
 const temporaryDirectories: string[] = [];
 
@@ -24,6 +25,65 @@ afterEach(async () => {
 });
 
 describe("teacher-playground Excalidraw release", () => {
+  it("keeps inherited CI workflows on immutable current actions and quiet installs", async () => {
+    const workflowDirectory = path.resolve(
+      path.dirname(fileURLToPath(import.meta.url)),
+      "../.github/workflows",
+    );
+    const workflowFiles = [
+      "autorelease-excalidraw.yml",
+      "autorelease-preview.yml",
+      "build-docker.yml",
+      "cancel.yml",
+      "lint.yml",
+      "locales-coverage.yml",
+      "publish-docker.yml",
+      "sentry-production.yml",
+      "semantic-pr-title.yml",
+      "size-limit.yml",
+      "test-coverage-pr.yml",
+      "test.yml",
+    ];
+    const workflows = await Promise.all(
+      workflowFiles.map(async (file) => ({
+        file,
+        source: await readFile(path.join(workflowDirectory, file), "utf8"),
+      })),
+    );
+
+    for (const { file, source } of workflows) {
+      expect(source, file).not.toMatch(/node-version:\s*["']?18(?:\.x)?/);
+      expect(source, file).not.toMatch(
+        /uses:\s*[\w.-]+\/[\w.-]+@(?:v\d|\d+\.)/,
+      );
+      expect(source, file).toMatch(/uses:\s*[\w.-]+\/[\w.-]+@[0-9a-f]{40}/);
+      expect(source, file).not.toMatch(/\bcorepack\b/);
+      expect(source, file).not.toMatch(/\byarn install\b/);
+      expect(source, file).not.toMatch(/\byarn --frozen-lockfile\b/);
+    }
+  });
+
+  it("filters only Yarn peer warnings through the checked install wrapper", () => {
+    expect(
+      shouldSuppressYarnPeerWarning(
+        'warning "foo@1.0.0" has unmet peer dependency "bar@^1.0.0".',
+      ),
+    ).toBe(true);
+    expect(
+      shouldSuppressYarnPeerWarning(
+        'warning "foo@1.0.0" has incorrect peer dependency "bar@^1.0.0".',
+      ),
+    ).toBe(true);
+    expect(
+      shouldSuppressYarnPeerWarning(
+        "warning left-pad@1.3.0: Use String.prototype.padStart()",
+      ),
+    ).toBe(false);
+    expect(
+      shouldSuppressYarnPeerWarning("error Command failed with exit code 1."),
+    ).toBe(false);
+  });
+
   it("separates branch validation from tagged release and R2 publishing", async () => {
     const workflowDirectory = path.resolve(
       path.dirname(fileURLToPath(import.meta.url)),
@@ -76,7 +136,7 @@ describe("teacher-playground Excalidraw release", () => {
       expect(workflow).toMatch(/Install Yarn 1\.22\.22/);
       expect(workflow).toMatch(/npm install --global yarn@1\.22\.22/);
       expect(workflow).toMatch(
-        /yarn install --silent --frozen-lockfile --non-interactive/,
+        /scripts\/yarn-install-quiet\.mjs install --silent --frozen-lockfile --non-interactive/,
       );
       expect(workflow).not.toMatch(/corepack enable/);
     }
@@ -169,9 +229,12 @@ describe("teacher-playground Excalidraw release", () => {
       warn: (message, options) => warnings.push({ message, options }),
     });
     logger.warn("deprecated", { deprecation: true });
-    logger.warn("125 repetitive deprecation warnings omitted.\nRun in verbose mode to see all warnings.", {
-      deprecation: false,
-    });
+    logger.warn(
+      "125 repetitive deprecation warnings omitted.\nRun in verbose mode to see all warnings.",
+      {
+        deprecation: false,
+      },
+    );
     logger.warn("ordinary", { deprecation: false });
     expect(warnings).toEqual([
       { message: "ordinary", options: { deprecation: false } },

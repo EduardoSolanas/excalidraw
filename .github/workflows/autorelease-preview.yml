@@ -10,14 +10,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: React to release comment
-        uses: peter-evans/create-or-update-comment@v1
+        uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v5.0.0
         with:
           token: ${{ secrets.PUSH_TRANSLATIONS_COVERAGE_PAT }}
           comment-id: ${{ github.event.comment.id }}
           reactions: "+1"
       - name: Get PR SHA
         id: sha
-        uses: actions/github-script@v4
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b # v9.0.0
         with:
           result-encoding: string
           script: |
@@ -28,14 +28,16 @@ jobs:
               pull_number: number,
             });
             return pr.data.head.sha
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ steps.sha.outputs.result }}
           fetch-depth: 2
-      - name: Setup Node.js 18.x
-        uses: actions/setup-node@v2
+      - name: Setup Node.js 22.x
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 18.x
+          node-version: 22.x
+      - name: Install Yarn 1.22.22
+        run: npm install --global yarn@1.22.22 --no-fund --no-audit
       - name: Set up publish access
         run: |
           npm config set //registry.npmjs.org/:_authToken ${NPM_TOKEN}
@@ -44,11 +46,11 @@ jobs:
       - name: Auto release preview
         id: "autorelease"
         run: |
-          yarn add @actions/core -W
+          node scripts/yarn-install-quiet.mjs add @actions/core -W --silent
           yarn autorelease preview ${{ github.event.issue.number }}
       - name: Post comment post release
         if: always()
-        uses: peter-evans/create-or-update-comment@v1
+        uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v5.0.0
         with:
           token: ${{ secrets.PUSH_TRANSLATIONS_COVERAGE_PAT }}
           issue-number: ${{ github.event.issue.number }}

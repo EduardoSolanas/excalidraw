@@ -10,17 +10,19 @@ jobs:
       CI_JOB_NUMBER: 1
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
-      - name: Setup Node.js 18.x
-        uses: actions/setup-node@v3
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Setup Node.js 22.x
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 18.x
+          node-version: 22.x
+      - name: Install Yarn 1.22.22
+        run: npm install --global yarn@1.22.22 --no-fund --no-audit
       - name: Install in packages/excalidraw
-        run: yarn
+        run: node ../../scripts/yarn-install-quiet.mjs install --silent --frozen-lockfile --non-interactive
         working-directory: packages/excalidraw
         env:
           CI: true
-      - uses: andresz1/size-limit-action@v1
+      - uses: andresz1/size-limit-action@94bc357df29c36c8f8d50ea497c3e225c3c95d1d # v1.8.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           build_script: build:esm

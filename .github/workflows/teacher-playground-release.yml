@@ -25,7 +25,7 @@ jobs:
       - name: Install Yarn 1.22.22
         run: npm install --global yarn@1.22.22 --no-fund --no-audit
       - name: Install locked dependencies
-        run: yarn install --silent --frozen-lockfile --non-interactive
+        run: node scripts/yarn-install-quiet.mjs install --silent --frozen-lockfile --non-interactive
       - name: Typecheck
         run: yarn test:typecheck
       - name: Lint and formatting
@@ -52,7 +52,7 @@ jobs:
       - name: Install Yarn 1.22.22
         run: npm install --global yarn@1.22.22 --no-fund --no-audit
       - name: Install locked dependencies
-        run: yarn install --silent --frozen-lockfile --non-interactive
+        run: node scripts/yarn-install-quiet.mjs install --silent --frozen-lockfile --non-interactive
       - name: Build and prepare release bundle
         env:
           RELEASE_TAG: ${{ github.ref_name }}
@@ -136,7 +136,7 @@ jobs:
       - name: Install Yarn 1.22.22
         run: npm install --global yarn@1.22.22 --no-fund --no-audit
       - name: Install locked dependencies
-        run: yarn install --silent --frozen-lockfile --non-interactive
+        run: node scripts/yarn-install-quiet.mjs install --silent --frozen-lockfile --non-interactive
       - name: Rebuild exact release bundle
         env:
           RELEASE_TAG: ${{ steps.validate.outputs.release_tag }}

@@ -23,6 +23,60 @@ afterEach(async () => {
 });
 
 describe("teacher-playground Excalidraw release", () => {
+  it("separates branch validation from tagged release and R2 publishing", async () => {
+    const workflowDirectory = path.resolve(
+      path.dirname(fileURLToPath(import.meta.url)),
+      "../.github/workflows",
+    );
+    const releaseWorkflow = await readFile(
+      path.join(workflowDirectory, "teacher-playground-release.yml"),
+      "utf8",
+    );
+    const validateWorkflow = await readFile(
+      path.join(workflowDirectory, "teacher-playground-validate.yml"),
+      "utf8",
+    );
+    const releaseJobStart = releaseWorkflow.indexOf("\n  release:\n");
+    const publishJobStart = releaseWorkflow.indexOf("\n  publish-r2:\n");
+    const recoverJobStart = releaseWorkflow.indexOf("\n  recover-r2:\n");
+    const validateJobStart = releaseWorkflow.indexOf("\n  validate:\n");
+    const validateJob = releaseWorkflow.slice(
+      validateJobStart,
+      releaseJobStart,
+    );
+    const releaseJob = releaseWorkflow.slice(releaseJobStart, publishJobStart);
+    const publishJob = releaseWorkflow.slice(publishJobStart, recoverJobStart);
+    const recoverJob = releaseWorkflow.slice(recoverJobStart);
+
+    expect(releaseWorkflow).toMatch(
+      /push:\s*\n\s+tags:\s*\n\s+- "teacher-playground-v\*"/,
+    );
+    expect(releaseWorkflow).not.toMatch(/pull_request:/);
+    expect(releaseWorkflow).not.toMatch(/branches:/);
+    expect(validateWorkflow).toMatch(/pull_request:/);
+    expect(validateWorkflow).toMatch(/push:\s*\n\s+branches:\s*\n\s+- "\*\*"/);
+    expect(validateWorkflow).toMatch(/yarn test:typecheck/);
+    expect(validateWorkflow).toMatch(/yarn test:code/);
+    expect(validateWorkflow).toMatch(/yarn test:other/);
+    expect(validateWorkflow).toMatch(/yarn test:teacher-playground-release/);
+    expect(validateWorkflow).toMatch(/yarn build:package/);
+
+    expect(validateJob).toMatch(/yarn test:typecheck/);
+    expect(validateJob).toMatch(/yarn test:code/);
+    expect(validateJob).toMatch(/yarn test:other/);
+    expect(validateJob).toMatch(/yarn test:teacher-playground-release/);
+    expect(validateJob).toMatch(/yarn build:package/);
+    expect(releaseJob).toMatch(/needs:\s+validate/);
+    expect(releaseJob).toMatch(/Upload release bundle artifact/);
+    expect(releaseJob).toMatch(/gh release create/);
+    expect(releaseJob).not.toMatch(/teacher-playground-r2-upload/);
+    expect(publishJob).toMatch(/needs:\s+release/);
+    expect(publishJob).toMatch(/actions\/checkout@v4/);
+    expect(publishJob).toMatch(/actions\/download-artifact@v4/);
+    expect(publishJob).toMatch(/teacher-playground-r2-upload\.mjs/);
+    expect(recoverJob).toMatch(/needs:\s+validate/);
+  });
+
   it("defines a validated upload-only recovery workflow for an existing release", async () => {
     const workflow = await readFile(
       path.resolve(

@@ -31,9 +31,9 @@ git push origin teacher-playground/release-v0.18.1
 git push origin teacher-playground-v0.18.1-tp.2
 ```
 
-The workflow validates the package identity, release assembly, types, lint, formatting, and production package build. A matching tag creates a GitHub Release containing the package tarball, checksums, manifest, and `latest.json`.
+Branch and pull-request pushes run the validation workflow only. The tag workflow repeats the package identity, release assembly, type, lint, formatting, and production package-build gates before creating a GitHub Release containing the package tarball, checksums, manifest, and `latest.json`. Cloudflare publishing runs afterwards as the separate `publish-r2` job, so an R2 failure remains visible without making the completed GitHub Release job appear skipped or failed.
 
-The release job uses the existing playground CI contract: it runs in the `prod` environment and uploads through Cloudflare's authenticated R2 REST API. Configure these exact GitHub environment values:
+The `publish-r2` job uses the existing playground CI contract: it runs in the `prod` environment and uploads through Cloudflare's authenticated R2 REST API. Configure these exact GitHub environment values:
 
 - secret `CLOUDFLARE_API_TOKEN` — a Cloudflare API token with permission to write R2 objects.
 - variable `CLOUDFLARE_ACCOUNT_ID` — the account that owns the R2 bucket.

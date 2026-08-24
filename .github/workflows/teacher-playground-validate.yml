@@ -1,0 +1,33 @@
+name: Teacher Playground Excalidraw validation
+
+on:
+  pull_request:
+  push:
+    branches:
+      - "**"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+      - name: Enable Corepack
+        run: corepack enable
+      - name: Install locked dependencies
+        run: yarn install --frozen-lockfile --non-interactive
+      - name: Typecheck
+        run: yarn test:typecheck
+      - name: Lint and formatting
+        run: |
+          yarn test:code
+          yarn test:other
+      - name: Release assembly tests
+        run: yarn test:teacher-playground-release
+      - name: Build package
+        run: yarn build:package

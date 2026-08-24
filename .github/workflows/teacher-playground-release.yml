@@ -1,10 +1,7 @@
 name: Teacher Playground Excalidraw release
 
 on:
-  pull_request:
   push:
-    branches:
-      - "**"
     tags:
       - "teacher-playground-v*"
   workflow_dispatch:
@@ -79,6 +76,21 @@ jobs:
             --verify-tag \
             --title "$GITHUB_REF_NAME" \
             --generate-notes
+
+  publish-r2:
+    if: startsWith(github.ref, 'refs/tags/teacher-playground-v')
+    needs: release
+    runs-on: ubuntu-latest
+    environment: prod
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download release bundle artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: teacher-playground-excalidraw-${{ github.ref_name }}
+          path: release/cdn
       - name: Upload versioned release to Cloudflare R2
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

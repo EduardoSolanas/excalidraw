@@ -2,6 +2,23 @@
 
 This fork publishes versioned package bundles and browser distribution files from a Cloudflare R2 bucket. The Terraform in `infra/cloudflare` creates the bucket, read-only GET/HEAD CORS policy, and—when configured—a Cloudflare R2 custom domain. It does not configure remote state, store credentials, or claim that a live deployment has happened.
 
+## Prerequisite: R2 must be enabled on the account
+
+R2 is an opt-in service. Until it is activated in the Cloudflare Dashboard, every R2 API call fails before Terraform can create anything, and the error names the cause rather than a permission problem:
+
+```text
+A request to the Cloudflare API (/accounts/{account_id}/r2/buckets) failed.
+Please enable R2 through the Cloudflare Dashboard. [code: 10042]
+```
+
+Activation is a dashboard action by an account owner and requires a payment method on file, even though the first 10 GB per month are free. Checked on 2026-08-24 against the Teacher Playground deployment account, R2 is **not** enabled, so no bucket, custom domain, or object described in this document exists yet. Confirm activation before running Terraform or dispatching the release workflow:
+
+```sh
+CLOUDFLARE_ACCOUNT_ID=YOUR_CLOUDFLARE_ACCOUNT_ID npx wrangler r2 bucket list
+```
+
+One release is roughly 73 MB, so the free tier holds well over a hundred versions; storage is not the reason to prune, and there is deliberately no expiration rule.
+
 ## Provision the R2 distribution
 
 Run Terraform from the infrastructure directory. The provider reads the `CLOUDFLARE_API_TOKEN` environment variable; use a token with R2 Storage Write and, when using `cdn_domain`, the permissions required by the R2 custom-domain resource.
@@ -21,6 +38,22 @@ terraform apply \
 ```
 
 `zone_id` and `cdn_domain` are optional together. Omit both to provision only the bucket and its CORS policy. `bucket_name` defaults to `teacher-playground-excalidraw`; pass `-var='bucket_name=...'` when a different name is required. Review the plan before applying it. The bucket has `prevent_destroy` enabled, and there is no object-expiration rule: immutable release objects are retained until an intentional, separately reviewed retention process is chosen.
+
+## One bucket, three writers — pick an owner
+
+`teacher-playground-excalidraw` is currently reconciled from three independent places, and none of them knows about the other two:
+
+| Writer | Location | Mechanism |
+| --- | --- | --- |
+| This fork | `infra/cloudflare` (here) | Terraform, `cdn_domain` optional |
+| The parent app | `infra/cloudflare/excalidraw-cdn` | Terraform, hostname hardcoded to `excalidraw-assets.sen-tutor.co.uk` |
+| The parent app's deploy | `scripts/excalidraw-cdn.mjs reconcile` | imperative Cloudflare REST calls on every deploy |
+
+Both Terraform stacks declare `prevent_destroy` on the same bucket name, so whichever applies second either adopts a resource it did not create or reports a conflict. The deploy script creates the bucket, CORS rule, and custom domain outright when they are absent, which means an ordinary deploy can bring the bucket into existence behind both Terraform states and leave each of them describing infrastructure it does not own.
+
+The object keys overlap as well. This fork publishes `releases/<version>/dist/**`, and because the package's `dist` tree contains `prod`, its objects land on exactly the keys the parent uploader writes from `node_modules/@teacher-playground/excalidraw/dist/prod`. Both also write `latest.json` at the bucket root. Objects documented as immutable can therefore be rewritten by the other publisher, and the surviving `latest.json` is simply whichever ran last.
+
+Nothing here is broken today, because nothing has run — R2 is not enabled. That makes this the moment to choose, before state exists to reconcile. Pick one owner for the bucket, its CORS policy, and its custom domain, and reduce the other two to publishers that upload objects and assume the container already exists. The parent's `DEPLOY.md` records the same conflict from the application side.
 
 ## GitHub configuration
 

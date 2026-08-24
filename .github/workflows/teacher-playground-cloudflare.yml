@@ -1,0 +1,90 @@
+name: Teacher Playground Cloudflare CDN
+
+on:
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: teacher-playground-cloudflare-prod
+  cancel-in-progress: false
+
+jobs:
+  provision:
+    runs-on: ubuntu-latest
+    environment: prod
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd
+        with:
+          terraform_version: 1.9.8
+
+      - name: Restore most recent Terraform state artifact
+        working-directory: infra/cloudflare
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARTIFACT_NAME: teacher-playground-cloudflare-terraform-state
+        shell: bash
+        run: |
+          set -euo pipefail
+          artifact_id="$(gh api --paginate \
+            "/repos/${GITHUB_REPOSITORY}/actions/artifacts?name=${ARTIFACT_NAME}&per_page=100" \
+            --jq '.artifacts[] | select(.expired == false) | [.created_at, .id] | @tsv' \
+            | sort -r | awk 'NR == 1 { print $2 }')"
+          if [[ -z "$artifact_id" ]]; then
+            echo "No previous Terraform state artifact found; starting with empty local state."
+            exit 0
+          fi
+          echo "Restoring Terraform state artifact $artifact_id"
+          gh api "/repos/${GITHUB_REPOSITORY}/actions/artifacts/${artifact_id}/zip" > terraform-state.zip
+          unzip -o terraform-state.zip
+          rm terraform-state.zip
+
+      - name: Terraform init
+        working-directory: infra/cloudflare
+        run: terraform init -input=false
+
+      - name: Import existing release bucket on first run
+        if: ${{ ! hashFiles('infra/cloudflare/terraform.tfstate') }}
+        working-directory: infra/cloudflare
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          TF_VAR_account_id: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+        run: terraform import -input=false cloudflare_r2_bucket.releases "${CLOUDFLARE_ACCOUNT_ID}/teacher-playground-excalidraw/default"
+
+      - name: Terraform format check
+        working-directory: infra/cloudflare
+        run: terraform fmt -check -recursive
+
+      - name: Terraform validate
+        working-directory: infra/cloudflare
+        run: terraform validate
+
+      - name: Terraform plan
+        working-directory: infra/cloudflare
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          TF_VAR_account_id: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+        run: terraform plan -input=false -out=tfplan
+
+      - name: Terraform apply
+        working-directory: infra/cloudflare
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          TF_VAR_account_id: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+        run: terraform apply -input=false tfplan
+
+      - name: Persist Terraform state artifact
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: teacher-playground-cloudflare-terraform-state
+          path: infra/cloudflare/terraform.tfstate
+          if-no-files-found: ignore
+          retention-days: 90

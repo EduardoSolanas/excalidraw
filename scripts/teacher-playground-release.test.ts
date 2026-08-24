@@ -329,6 +329,44 @@ describe("teacher-playground Excalidraw release", () => {
     expect(workflow).not.toMatch(/recover-r2:[\s\S]*gh release create/);
   });
 
+  it("defines a manual, stateful production Terraform workflow for the CDN", async () => {
+    const workflow = await readFile(
+      path.resolve(
+        path.dirname(fileURLToPath(import.meta.url)),
+        "../.github/workflows/teacher-playground-cloudflare.yml",
+      ),
+      "utf8",
+    );
+
+    expect(workflow).toMatch(/^name: .*Cloudflare.*$/m);
+    expect(workflow).toMatch(/workflow_dispatch:/);
+    expect(workflow).toMatch(/environment:\s+prod/);
+    expect(workflow).toMatch(/actions:\s*read/);
+    expect(workflow).toMatch(/contents:\s*read/);
+    expect(workflow).toMatch(
+      /CLOUDFLARE_API_TOKEN:\s*\$\{\{ secrets\.CLOUDFLARE_API_TOKEN \}\}/,
+    );
+    expect(workflow).toMatch(
+      /CLOUDFLARE_ACCOUNT_ID:\s*\$\{\{ vars\.CLOUDFLARE_ACCOUNT_ID \}\}/,
+    );
+    expect(workflow).toMatch(/terraform fmt -check/);
+    expect(workflow).toMatch(/terraform validate/);
+    expect(workflow).toMatch(
+      /TF_VAR_account_id:[\s\S]*terraform import[\s\S]*cloudflare_r2_bucket\.releases "\$\{CLOUDFLARE_ACCOUNT_ID\}\/teacher-playground-excalidraw\/default"/,
+    );
+    expect(workflow).toMatch(/terraform plan/);
+    expect(workflow).toMatch(/terraform apply/);
+    expect(workflow).toMatch(/actions\/checkout@[0-9a-f]{40}/);
+    expect(workflow).toMatch(/hashicorp\/setup-terraform@[0-9a-f]{40}/);
+    expect(workflow).toMatch(/actions\/upload-artifact@[0-9a-f]{40}/);
+    expect(workflow).toMatch(/actions\/artifacts\?name=/);
+    expect(workflow).toMatch(/sort -r[\s\S]*awk 'NR == 1/);
+    expect(workflow).toMatch(/terraform\.tfstate/);
+    expect(workflow).toMatch(/if:\s*\$\{\{ always\(\) \}\}/);
+    expect(workflow).toMatch(/retention-days:\s*90/);
+    expect(workflow).not.toMatch(/permissions:\s*write/);
+  });
+
   it("accepts only the package's exact release tag", () => {
     expect(() =>
       validateReleaseTag("teacher-playground-v0.18.1-tp.2", "0.18.1-tp.2"),

@@ -186,27 +186,20 @@ describe("teacher-playground Excalidraw release", () => {
       "npm install https://cdn.example.com/releases/0.18.1-tp.7/package.tgz",
     );
     expect(documentation).toContain("-f version=0.18.1-tp.7");
-    expect(documentation).toContain(
-      "yarn release:teacher-playground --tag teacher-playground-v0.18.1-tp.6",
-    );
-    expect(documentation).toContain(
-      "npm install https://cdn.example.com/releases/0.18.1-tp.6/package.tgz",
-    );
-    expect(documentation).toContain("-f version=0.18.1-tp.6");
-    expect(documentation).toContain("GitHub Actions run `32781207895`");
+    expect(documentation).toContain("GitHub Actions run `33213074035`");
     expect(documentation).toMatch(
       /validation, GitHub Release, and `publish-r2`\s+jobs all passed/,
     );
     expect(documentation).toContain(
-      "`latest.json` currently points to 0.18.1-tp.6",
+      "`latest.json` currently points to 0.18.1-tp.7",
     );
-    expect(documentation).toContain("9,445,242 bytes");
+    expect(documentation).toContain("9,448,795 bytes");
     expect(documentation).toContain(
       "zero paths matching zh-CN, zh-HK, zh-TW, or Xiaolai",
     );
     expect(documentation).toContain("Japanese and Korean assets are retained");
     expect(workflow).toContain(
-      'description: "Teacher Playground version to upload (for example 0.18.1-tp.6)"',
+      'description: "Teacher Playground version to upload (for example 0.18.1-tp.7)"',
     );
     expect(workflow.indexOf("- name: Build package")).toBeLessThan(
       workflow.indexOf("- name: Release assembly tests"),

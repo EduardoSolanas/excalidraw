@@ -48,7 +48,7 @@ This fork is the sole owner of the bucket, CORS policy, custom domain, and relea
 | This fork | `infra/cloudflare` (here) | Terraform, `cdn_domain` optional |
 | The parent app | consumer configuration only | installs the immutable package/distribution URL; it must not provision or upload this bucket |
 
-The parent application must not carry a second Terraform stack or an imperative `reconcile`/upload path for this bucket. Its deploy only consumes the published immutable URL. This prevents competing state, overwrites under `releases/<version>/`, and conflicting root `latest.json` metadata. The fork-owned resources and current tp.6 release are live and verified.
+The parent application must not carry a second Terraform stack or an imperative `reconcile`/upload path for this bucket. Its deploy only consumes the published immutable URL. This prevents competing state, overwrites under `releases/<version>/`, and conflicting root `latest.json` metadata. The fork-owned resources and current tp.6 release are live and verified; tp.7 is staged on the release branch for the increment API changes below.
 
 ## GitHub configuration
 
@@ -82,6 +82,15 @@ gh workflow run teacher-playground-release.yml \
   -f version=0.18.1-tp.6
 ```
 
+After the tp.7 tag workflow completes, the upload-only command is:
+
+```sh
+gh workflow run teacher-playground-release.yml \
+  --repo EduardoSolanas/excalidraw \
+  --ref teacher-playground/release-v0.18.1 \
+  -f version=0.18.1-tp.7
+```
+
 The version input must match `x.y.z-tp.n`; arbitrary refs and paths are rejected.
 
 ## Release layout and tag
@@ -91,6 +100,8 @@ The current fork release uses the tag convention:
 ```text
 teacher-playground-v0.18.1-tp.6
 ```
+
+The staged increment API build is tagged `teacher-playground-v0.18.1-tp.7`.
 
 For a configured HTTPS custom domain, publish each release without overwriting older version paths:
 
@@ -112,6 +123,8 @@ node scripts/yarn-install-quiet.mjs install --silent --frozen-lockfile --non-int
 yarn release:teacher-playground --tag teacher-playground-v0.18.1-tp.6
 ```
 
+For the staged build, use `yarn release:teacher-playground --tag teacher-playground-v0.18.1-tp.7`.
+
 The output is written below `release/cdn`. The GitHub Actions tag job uploads the same tree as a workflow artifact and GitHub Release, then `scripts/teacher-playground-r2-upload.mjs` publishes every versioned object through the Cloudflare R2 Upload Object API with immutable cache headers and updates only `latest.json` with no-cache headers. The uploader preserves nested object paths and limits concurrent requests.
 
 ## Install an immutable fork tarball
@@ -120,6 +133,12 @@ Consumers that need this exact build can install the versioned tarball directly 
 
 ```sh
 npm install https://cdn.example.com/releases/0.18.1-tp.6/package.tgz
+```
+
+After publication, the tp.7 immutable package URL will be:
+
+```sh
+npm install https://cdn.example.com/releases/0.18.1-tp.7/package.tgz
 ```
 
 Use the URL for the chosen version and record it in the parent project’s lock file. Do not use `/latest.json` as an install URL; it is a release pointer, not a package archive.

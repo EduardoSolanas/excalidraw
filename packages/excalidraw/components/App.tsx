@@ -661,6 +661,7 @@ class App extends React.Component<AppProps, AppState> {
     ]
   >();
   onUserFollowEmitter = new Emitter<[payload: OnUserFollowedPayload]>();
+  onToolChangeEmitter = new Emitter<[tool: AppState["activeTool"]]>();
   onScrollChangeEmitter = new Emitter<
     [scrollX: number, scrollY: number, zoom: AppState["zoom"]]
   >();
@@ -741,10 +742,12 @@ class App extends React.Component<AppProps, AppState> {
         updateFrameRendering: this.updateFrameRendering,
         toggleSidebar: this.toggleSidebar,
         onChange: (cb) => this.onChangeEmitter.on(cb),
+        onIncrement: (cb) => this.store.onStoreIncrementEmitter.on(cb),
         onPointerDown: (cb) => this.onPointerDownEmitter.on(cb),
         onPointerUp: (cb) => this.onPointerUpEmitter.on(cb),
         onScrollChange: (cb) => this.onScrollChangeEmitter.on(cb),
         onUserFollow: (cb) => this.onUserFollowEmitter.on(cb),
+        onToolChange: (cb) => this.onToolChangeEmitter.on(cb),
       } as const;
       if (typeof excalidrawAPI === "function") {
         excalidrawAPI(api);
@@ -2532,6 +2535,7 @@ class App extends React.Component<AppProps, AppState> {
     this.laserTrails.stop();
     this.eraserTrail.stop();
     this.onChangeEmitter.clear();
+    this.onToolChangeEmitter.clear();
     this.store.onStoreIncrementEmitter.clear();
     ShapeCache.destroy();
     SnapCache.destroy();
@@ -3899,6 +3903,7 @@ class App extends React.Component<AppProps, AppState> {
        * @default CaptureUpdateAction.EVENTUALLY
        */
       captureUpdate?: SceneData["captureUpdate"];
+      source?: SceneData["source"];
     }) => {
       const nextElements = syncInvalidIndices(sceneData.elements ?? []);
 
@@ -3926,6 +3931,7 @@ class App extends React.Component<AppProps, AppState> {
           this.store.captureIncrement(
             nextCommittedElements,
             nextCommittedAppState,
+            sceneData.source,
           );
         } else if (sceneData.captureUpdate === CaptureUpdateAction.NEVER) {
           this.store.updateSnapshot(
@@ -4714,34 +4720,43 @@ class App extends React.Component<AppProps, AppState> {
       });
     }
 
-    this.setState((prevState) => {
-      const commonResets = {
-        snapLines: prevState.snapLines.length ? [] : prevState.snapLines,
-        originSnapOffset: null,
-        activeEmbeddable: null,
-      } as const;
+    let didChangeTool = false;
+    this.setState(
+      (prevState) => {
+        didChangeTool = !isShallowEqual(prevState.activeTool, nextActiveTool);
+        const commonResets = {
+          snapLines: prevState.snapLines.length ? [] : prevState.snapLines,
+          originSnapOffset: null,
+          activeEmbeddable: null,
+        } as const;
 
-      if (nextActiveTool.type === "freedraw") {
-        this.store.shouldCaptureIncrement();
-      }
+        if (nextActiveTool.type === "freedraw") {
+          this.store.shouldCaptureIncrement();
+        }
 
-      if (nextActiveTool.type !== "selection") {
+        if (nextActiveTool.type !== "selection") {
+          return {
+            ...prevState,
+            activeTool: nextActiveTool,
+            selectedElementIds: makeNextSelectedElementIds({}, prevState),
+            selectedGroupIds: makeNextSelectedElementIds({}, prevState),
+            editingGroupId: null,
+            multiElement: null,
+            ...commonResets,
+          };
+        }
         return {
           ...prevState,
           activeTool: nextActiveTool,
-          selectedElementIds: makeNextSelectedElementIds({}, prevState),
-          selectedGroupIds: makeNextSelectedElementIds({}, prevState),
-          editingGroupId: null,
-          multiElement: null,
           ...commonResets,
         };
-      }
-      return {
-        ...prevState,
-        activeTool: nextActiveTool,
-        ...commonResets,
-      };
-    });
+      },
+      () => {
+        if (didChangeTool) {
+          this.onToolChangeEmitter.trigger(this.state.activeTool);
+        }
+      },
+    );
   };
 
   setOpenDialog = (dialogType: AppState["openDialog"]) => {

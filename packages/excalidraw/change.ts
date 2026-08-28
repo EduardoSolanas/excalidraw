@@ -806,9 +806,9 @@ type ElementPartial<T extends ExcalidrawElement = ExcalidrawElement> = Omit<
  */
 export class ElementsChange implements Change<SceneElementsMap> {
   private constructor(
-    private readonly added: Map<string, Delta<ElementPartial>>,
-    private readonly removed: Map<string, Delta<ElementPartial>>,
-    private readonly updated: Map<string, Delta<ElementPartial>>,
+    public readonly added: Map<string, Delta<ElementPartial>>,
+    public readonly removed: Map<string, Delta<ElementPartial>>,
+    public readonly updated: Map<string, Delta<ElementPartial>>,
   ) {}
 
   public static create(

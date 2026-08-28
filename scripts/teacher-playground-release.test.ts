@@ -177,8 +177,15 @@ describe("teacher-playground Excalidraw release", () => {
       "utf8",
     );
 
-    expect(packageJson.version).toBe("0.18.1-tp.6");
-    expect(documentation).toContain("teacher-playground-v0.18.1-tp.6");
+    expect(packageJson.version).toBe("0.18.1-tp.7");
+    expect(documentation).toContain("teacher-playground-v0.18.1-tp.7");
+    expect(documentation).toContain(
+      "yarn release:teacher-playground --tag teacher-playground-v0.18.1-tp.7",
+    );
+    expect(documentation).toContain(
+      "npm install https://cdn.example.com/releases/0.18.1-tp.7/package.tgz",
+    );
+    expect(documentation).toContain("-f version=0.18.1-tp.7");
     expect(documentation).toContain(
       "yarn release:teacher-playground --tag teacher-playground-v0.18.1-tp.6",
     );

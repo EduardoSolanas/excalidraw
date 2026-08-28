@@ -75,10 +75,11 @@ export type CaptureUpdateActionType = ValueOf<typeof CaptureUpdateAction>;
 /**
  * Represent an increment to the Store.
  */
-class StoreIncrementEvent {
+export class StoreIncrementEvent {
   constructor(
     public readonly elementsChange: ElementsChange,
     public readonly appStateChange: AppStateChange,
+    public readonly source?: string,
   ) {}
 }
 
@@ -110,6 +111,7 @@ export interface IStore {
   commit(
     elements: Map<string, OrderedExcalidrawElement> | undefined,
     appState: AppState | ObservedAppState | undefined,
+    source?: string,
   ): void;
 
   /**
@@ -161,11 +163,12 @@ export class Store implements IStore {
   public commit = (
     elements: Map<string, OrderedExcalidrawElement> | undefined,
     appState: AppState | ObservedAppState | undefined,
+    source?: string,
   ): void => {
     try {
       // Capture has precedence since it also performs update
       if (this.scheduledActions.has(CaptureUpdateAction.IMMEDIATELY)) {
-        this.captureIncrement(elements, appState);
+        this.captureIncrement(elements, appState, source);
       } else if (this.scheduledActions.has(CaptureUpdateAction.NEVER)) {
         this.updateSnapshot(elements, appState);
       }
@@ -179,6 +182,7 @@ export class Store implements IStore {
   public captureIncrement = (
     elements: Map<string, OrderedExcalidrawElement> | undefined,
     appState: AppState | ObservedAppState | undefined,
+    source?: string,
   ) => {
     const prevSnapshot = this.snapshot;
     const nextSnapshot = this.snapshot.maybeClone(elements, appState);
@@ -197,7 +201,7 @@ export class Store implements IStore {
       if (!elementsChange.isEmpty() || !appStateChange.isEmpty()) {
         // Notify listeners with the increment
         this.onStoreIncrementEmitter.trigger(
-          new StoreIncrementEvent(elementsChange, appStateChange),
+          new StoreIncrementEvent(elementsChange, appStateChange, source),
         );
       }
 

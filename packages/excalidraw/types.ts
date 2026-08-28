@@ -41,7 +41,7 @@ import type { IMAGE_MIME_TYPES, MIME_TYPES } from "./constants";
 import type { ContextMenuItems } from "./components/ContextMenu";
 import type { SnapLine } from "./snapping";
 import type { Merge, MaybePromise, ValueOf, MakeBrand } from "./utility-types";
-import type { CaptureUpdateActionType } from "./store";
+import type { CaptureUpdateActionType, StoreIncrementEvent } from "./store";
 import type { UserIdleState } from "./constants";
 
 export type SocketId = string & { _brand: "SocketId" };
@@ -590,6 +590,7 @@ export type SceneData = {
   appState?: ImportedDataState["appState"];
   collaborators?: Map<SocketId, Collaborator>;
   captureUpdate?: CaptureUpdateActionType;
+  source?: string;
 };
 
 export type ExportOpts = {
@@ -796,6 +797,17 @@ export interface ExcalidrawImperativeAPI {
       files: BinaryFiles,
     ) => void,
   ) => UnsubscribeCallback;
+  /**
+   * Subscribe to committed store increments.
+   *
+   * Fires with the delta Excalidraw already computes for history. Prefer this
+   * to `onChange` for collaboration because `onChange` emits the whole scene.
+   *
+   * @experimental mirrors IStore, which is experimental.
+   */
+  onIncrement: (
+    callback: (event: StoreIncrementEvent) => void,
+  ) => UnsubscribeCallback;
   onPointerDown: (
     callback: (
       activeTool: AppState["activeTool"],
@@ -816,7 +828,12 @@ export interface ExcalidrawImperativeAPI {
   onUserFollow: (
     callback: (payload: OnUserFollowedPayload) => void,
   ) => UnsubscribeCallback;
+  onToolChange: (
+    callback: (tool: AppState["activeTool"]) => void,
+  ) => UnsubscribeCallback;
 }
+
+export type { StoreIncrementEvent } from "./store";
 
 export type Device = Readonly<{
   viewport: {

@@ -311,6 +311,7 @@ import {
   getDataURL,
   getDataURL_sync,
   getFileFromEvent,
+  imageOutputTypeFor,
   ImageURLToFile,
   isImageFileHandle,
   isSupportedImageFile,
@@ -9762,12 +9763,31 @@ class App extends React.Component<AppProps, AppState> {
       throw new Error(t("errors.imageInsertError"));
     }
 
+    /*
+     * The encoding the scene will record, decided here rather than read back
+     * off the file afterwards.
+     *
+     * The conversion happens inside resizeImageFile, and its failure is caught
+     * below rather than thrown, so a picture can perfectly well reach the scene
+     * still in the encoding it arrived in. Adopting the target only once that
+     * call has returned keeps the recorded type and the bytes in agreement in
+     * both outcomes -- and reading `imageFile.type` back instead would lose the
+     * narrowing that isSupportedImageFile established, since the reassignment
+     * widens it to a bare string.
+     */
+    const outputType = imageOutputTypeFor(mimeType);
+    let finalMimeType = mimeType;
+
     const existingFileData = this.files[fileId];
     if (!existingFileData?.dataURL) {
       try {
         imageFile = await resizeImageFile(imageFile, {
           maxWidthOrHeight: DEFAULT_MAX_IMAGE_WIDTH_OR_HEIGHT,
+          outputType,
         });
+        if (outputType) {
+          finalMimeType = outputType;
+        }
       } catch (error: any) {
         console.error(
           "Error trying to resizing image file on insertion",
@@ -9810,7 +9830,7 @@ class App extends React.Component<AppProps, AppState> {
         try {
           this.addMissingFiles([
             {
-              mimeType,
+              mimeType: finalMimeType,
               id: fileId,
               dataURL,
               created: Date.now(),

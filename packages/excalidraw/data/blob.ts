@@ -293,11 +293,41 @@ export const dataURLToString = (dataURL: DataURL) => {
   return base64ToString(dataURL.slice(dataURL.indexOf(",") + 1));
 };
 
+/**
+ * The encoding an inserted image should be stored in, or undefined to keep its
+ * own.
+ *
+ * A photograph is inserted at the size the camera produced it and then kept in
+ * memory as a data URL for as long as the tab is open, so what it is encoded as
+ * is what a board costs the machine looking at it. WebP is the cheapest form
+ * that stays honest about the content: smaller than JPEG at the same quality,
+ * with an alpha channel so a cut-out does not gain a black background, and
+ * without JPEG's smearing of the text in a pasted screenshot.
+ *
+ * Two formats keep their own encoding. SVG is not raster and resizeImageFile
+ * refuses it anyway. GIF is excluded because the canvas this conversion runs
+ * through only ever sees one frame, and an animation silently reduced to a
+ * still is worse than an animation that stayed large.
+ *
+ * Derived from IMAGE_MIME_TYPES rather than listing the formats again, so a
+ * format added there is converted rather than quietly left behind.
+ */
+export const imageOutputTypeFor = (
+  mimeType: string,
+): typeof MIME_TYPES["webp"] | undefined => {
+  if (mimeType === MIME_TYPES.svg || mimeType === MIME_TYPES.gif) {
+    return undefined;
+  }
+  return (Object.values(IMAGE_MIME_TYPES) as string[]).includes(mimeType)
+    ? MIME_TYPES.webp
+    : undefined;
+};
+
 export const resizeImageFile = async (
   file: File,
   opts: {
     /** undefined indicates auto */
-    outputType?: typeof MIME_TYPES["jpg"];
+    outputType?: typeof MIME_TYPES["jpg"] | typeof MIME_TYPES["webp"];
     maxWidthOrHeight: number;
   },
 ): Promise<File> => {

@@ -27,7 +27,13 @@ jobs:
         run: |
           yarn test:code
           yarn test:other
-      - name: Release assembly tests
-        run: yarn test:teacher-playground-release
+      # The build comes first because the release assembly tests read the
+      # built artefact -- they walk packages/excalidraw/dist to prove no
+      # Chinese locale or Xiaolai font payload survived into what ships. With
+      # the order reversed they could only ever pass on a machine holding a
+      # stale dist from an earlier build, and on a clean CI checkout they
+      # failed with ENOENT on every run, which is what they had been doing.
       - name: Build package
         run: yarn build:package
+      - name: Release assembly tests
+        run: yarn test:teacher-playground-release

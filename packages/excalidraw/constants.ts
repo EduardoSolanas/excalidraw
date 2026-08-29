@@ -309,7 +309,22 @@ export const DEFAULT_EXPORT_PADDING = 10; // px
 
 export const DEFAULT_MAX_IMAGE_WIDTH_OR_HEIGHT = 1440;
 
-export const MAX_ALLOWED_FILE_BYTES = 4 * 1024 * 1024;
+/*
+ * Teacher Playground divergence: upstream sets this to 4MB.
+ *
+ * A tutoring board is mostly photographs -- a worksheet, a page of a textbook,
+ * a child's written work -- and a phone camera produces 3-8MB of JPEG without
+ * trying. At 4MB the editor refused a large share of them outright, before the
+ * application's upload route ever saw the file, so no amount of storage work
+ * upstream of it made any difference.
+ *
+ * 12MB covers an ordinary photograph with room to spare while staying under
+ * the room's own 25MB limit, so the editor never accepts a file the server will
+ * then refuse. It is deliberately not larger: the editor holds image bytes in
+ * memory as data URLs, which inflates them by roughly a third, so this cap is
+ * also a per-image memory budget on a pupil's laptop.
+ */
+export const MAX_ALLOWED_FILE_BYTES = 12 * 1024 * 1024;
 
 export const SVG_NS = "http://www.w3.org/2000/svg";
 

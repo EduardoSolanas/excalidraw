@@ -177,21 +177,21 @@ describe("teacher-playground Excalidraw release", () => {
       "utf8",
     );
 
-    expect(packageJson.version).toBe("0.18.1-tp.7");
-    expect(documentation).toContain("teacher-playground-v0.18.1-tp.7");
+    expect(packageJson.version).toBe("0.18.1-tp.8");
+    expect(documentation).toContain("teacher-playground-v0.18.1-tp.8");
     expect(documentation).toContain(
-      "yarn release:teacher-playground --tag teacher-playground-v0.18.1-tp.7",
+      "yarn release:teacher-playground --tag teacher-playground-v0.18.1-tp.8",
     );
     expect(documentation).toContain(
-      "npm install https://cdn.example.com/releases/0.18.1-tp.7/package.tgz",
+      "npm install https://cdn.example.com/releases/0.18.1-tp.8/package.tgz",
     );
-    expect(documentation).toContain("-f version=0.18.1-tp.7");
+    expect(documentation).toContain("-f version=0.18.1-tp.8");
     expect(documentation).toContain("GitHub Actions run `33213074035`");
     expect(documentation).toMatch(
       /validation, GitHub Release, and `publish-r2`\s+jobs all passed/,
     );
     expect(documentation).toContain(
-      "`latest.json` currently points to 0.18.1-tp.7",
+      "`latest.json` currently points to 0.18.1-tp.8",
     );
     expect(documentation).toContain("9,448,795 bytes");
     expect(documentation).toContain(
@@ -199,7 +199,7 @@ describe("teacher-playground Excalidraw release", () => {
     );
     expect(documentation).toContain("Japanese and Korean assets are retained");
     expect(workflow).toContain(
-      'description: "Teacher Playground version to upload (for example 0.18.1-tp.7)"',
+      'description: "Teacher Playground version to upload (for example 0.18.1-tp.8)"',
     );
     expect(workflow.indexOf("- name: Build package")).toBeLessThan(
       workflow.indexOf("- name: Release assembly tests"),

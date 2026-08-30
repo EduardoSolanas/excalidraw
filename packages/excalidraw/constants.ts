@@ -419,10 +419,27 @@ export const DEFAULT_SIDEBAR = {
   defaultTab: LIBRARY_SIDEBAR_TAB,
 } as const;
 
+/*
+ * Images are allowed into the library here, and are not upstream.
+ *
+ * Upstream is right for upstream: a library item carries elements and no
+ * files, so an image item names a fileId whose bytes live in the scene it came
+ * from. With a library kept in the browser or shared as a .excalidrawlib, that
+ * is a picture guaranteed to be broken somewhere else.
+ *
+ * The consuming application keeps its library against the room, on the server,
+ * and the bytes are already in that room's bucket under the same id -- so an
+ * image item resolves for the same teacher on any machine they teach from. It
+ * also keeps those files alive: its orphan sweep counts a room's library as a
+ * reference, so saving a shape pins its own bytes rather than leaving them to
+ * be collected once the picture leaves the board.
+ *
+ * A worked example photographed off a child's page is the thing a tutor most
+ * wants to keep and reuse, so this is the divergence the fork exists for.
+ */
 export const LIBRARY_DISABLED_TYPES = new Set([
   "iframe",
   "embeddable",
-  "image",
 ] as const);
 
 // use these constants to easily identify reference sites

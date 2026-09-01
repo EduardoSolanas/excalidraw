@@ -2671,7 +2671,12 @@ class App extends React.Component<AppProps, AppState> {
       }),
       addEventListener(document, EVENT.CUT, this.onCut, { passive: false }),
       addEventListener(window, EVENT.RESIZE, this.onResize, false),
-      addEventListener(window, EVENT.UNLOAD, this.onUnload, false),
+      // `pagehide`, not `unload`: Chrome now disallows unload listeners by
+      // default and refuses to register this one, logging a permissions-policy
+      // violation for it. `pagehide` fires in the cases unload did and also
+      // when a page enters the back/forward cache, which unload prevented
+      // altogether. The handler only clears focus state, so it is safe on both.
+      addEventListener(window, EVENT.PAGE_HIDE, this.onUnload, false),
       addEventListener(window, EVENT.BLUR, this.onBlur, false),
       addEventListener(
         this.excalidrawContainerRef.current,

@@ -186,14 +186,14 @@ describe("teacher-playground Excalidraw release", () => {
       "npm install https://cdn.example.com/releases/0.18.1-tp.11/package.tgz",
     );
     expect(documentation).toContain("-f version=0.18.1-tp.11");
-    expect(documentation).toContain("GitHub Actions run `33213074035`");
+    expect(documentation).toContain("GitHub Actions run `33518421200`");
     expect(documentation).toMatch(
       /validation, GitHub Release, and `publish-r2`\s+jobs all passed/,
     );
     expect(documentation).toContain(
       "`latest.json` currently points to 0.18.1-tp.11",
     );
-    expect(documentation).toContain("9,448,795 bytes");
+    expect(documentation).toContain("9,448,897 bytes");
     expect(documentation).toContain(
       "zero paths matching zh-CN, zh-HK, zh-TW, or Xiaolai",
     );

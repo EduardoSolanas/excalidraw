@@ -69,7 +69,7 @@ The `publish-r2` job uses the existing playground CI contract: it runs in the `p
 
 The uploader targets the fixed Terraform bucket `teacher-playground-excalidraw`; no S3 access-key or secret-key pair is required. A missing token or account variable fails the tagged release job clearly after the GitHub Release assets are created, so the bundle remains downloadable while the CDN status is visibly red. Terraform provisioning uses the same `CLOUDFLARE_API_TOKEN` locally or in a separately authorized infrastructure workflow. Do not commit token values or a Terraform state file.
 
-GitHub Actions run `33213074035` completed successfully: the validation, GitHub Release, and `publish-r2` jobs all passed for `0.18.1-tp.11`. `latest.json` currently points to 0.18.1-tp.11, and the public `package.tgz` is 9,448,795 bytes. The release manifest has zero paths matching zh-CN, zh-HK, zh-TW, or Xiaolai; Japanese and Korean assets are retained.
+GitHub Actions run `33518421200` completed successfully: the validation, GitHub Release, and `publish-r2` jobs all passed for `0.18.1-tp.11`. `latest.json` currently points to 0.18.1-tp.11, and the public `package.tgz` is 9,448,897 bytes. The release manifest has zero paths matching zh-CN, zh-HK, zh-TW, or Xiaolai; Japanese and Korean assets are retained.
 
 For a future recovery, run the upload-only path with the fork `prod` environment configured. The secret value cannot be copied or read by this repository; coordinate its configuration without exposing it. The path checks out the existing annotated tag, verifies the GitHub Release, rebuilds the exact bundle, and uploads it without creating or deleting a release. This command is for an existing version only; it does not create a release:
 

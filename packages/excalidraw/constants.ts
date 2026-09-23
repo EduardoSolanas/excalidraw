@@ -224,6 +224,10 @@ export const MIME_TYPES = {
   "excalidraw.png": "image/png",
   // binary
   binary: "application/octet-stream",
+  // document, offered only by the image tool's picker when `onDocumentFile`
+  // is set (App.tsx `onImageAction`) — not part of IMAGE_MIME_TYPES, so it
+  // never reaches paste/drop or any other picker's accepted types.
+  pdf: "application/pdf",
   // image
   ...IMAGE_MIME_TYPES,
 } as const;

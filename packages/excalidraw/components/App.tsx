@@ -9973,10 +9973,32 @@ class App extends React.Component<AppProps, AppState> {
 
       const imageFile = await fileOpen({
         description: "Image",
-        extensions: Object.keys(
-          IMAGE_MIME_TYPES,
-        ) as (keyof typeof IMAGE_MIME_TYPES)[],
+        extensions: [
+          ...(Object.keys(
+            IMAGE_MIME_TYPES,
+          ) as (keyof typeof IMAGE_MIME_TYPES)[]),
+          ...(this.props.onDocumentFile ? (["pdf"] as const) : []),
+        ],
       });
+
+      if (
+        this.props.onDocumentFile &&
+        (imageFile.type === MIME_TYPES.pdf ||
+          (!imageFile.type && /\.pdf$/i.test(imageFile.name)))
+      ) {
+        this.props.onDocumentFile(imageFile);
+        this.setState(
+          {
+            pendingImageElementId: null,
+            newElement: null,
+            activeTool: updateActiveTool(this.state, { type: "selection" }),
+          },
+          () => {
+            this.actionManager.executeAction(actionFinalize);
+          },
+        );
+        return;
+      }
 
       const imageElement = this.createImageElement({
         sceneX: x,

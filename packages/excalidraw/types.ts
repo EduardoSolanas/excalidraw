@@ -592,6 +592,16 @@ export interface ExcalidrawProps {
    * still exports via `exportToCanvas`. Never mutates the element.
    */
   isElementHidden?: (element: ExcalidrawElement) => boolean;
+  /**
+   * When set, the image tool's file picker (`App.tsx` `onImageAction`) also
+   * offers PDF files alongside the image types. If the file the user picks
+   * is a PDF — by type, or by a `.pdf` name when the type is empty — the
+   * editor creates no image element, calls this once with that file, and
+   * returns to the selection tool. Any other picked file follows the
+   * upstream image path unchanged. When absent, the picker offers images
+   * only, exactly as upstream.
+   */
+  onDocumentFile?: (file: File) => void;
 }
 
 export type SceneData = {

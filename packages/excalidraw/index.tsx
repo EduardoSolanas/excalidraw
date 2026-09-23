@@ -53,6 +53,7 @@ const ExcalidrawBase = (props: ExcalidrawProps) => {
     aiEnabled,
     showDeprecatedFonts,
     isElementHidden,
+    onDocumentFile,
   } = props;
 
   const canvasActions = props.UIOptions?.canvasActions;
@@ -144,6 +145,7 @@ const ExcalidrawBase = (props: ExcalidrawProps) => {
           aiEnabled={aiEnabled !== false}
           showDeprecatedFonts={showDeprecatedFonts}
           isElementHidden={isElementHidden}
+          onDocumentFile={onDocumentFile}
         >
           {children}
         </App>

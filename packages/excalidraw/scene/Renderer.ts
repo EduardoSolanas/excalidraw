@@ -68,15 +68,21 @@ export class Renderer {
       editingTextElement,
       newElementId,
       pendingImageElementId,
+      isElementHidden,
     }: {
       elements: readonly NonDeletedExcalidrawElement[];
       editingTextElement: AppState["editingTextElement"];
       newElementId: ExcalidrawElement["id"] | undefined;
       pendingImageElementId: AppState["pendingImageElementId"];
+      isElementHidden: ((element: ExcalidrawElement) => boolean) | undefined;
     }) => {
       const elementsMap = toBrandedType<RenderableElementsMap>(new Map());
 
       for (const element of elements) {
+        if (isElementHidden?.(element)) {
+          continue;
+        }
+
         if (isImageElement(element)) {
           if (
             // => not placed on canvas yet (but in elements array)
@@ -115,6 +121,7 @@ export class Renderer {
         editingTextElement,
         newElementId,
         pendingImageElementId,
+        isElementHidden,
         // cache-invalidation nonce
         sceneNonce: _sceneNonce,
       }: {
@@ -130,6 +137,9 @@ export class Renderer {
          * (we'd have to prefilter elements outside of this function) */
         newElementId: ExcalidrawElement["id"] | undefined;
         pendingImageElementId: AppState["pendingImageElementId"];
+        /** identity change busts the cache, so a new function must be passed
+         * whenever the set of hidden elements should be reconsidered */
+        isElementHidden: ((element: ExcalidrawElement) => boolean) | undefined;
         sceneNonce: ReturnType<InstanceType<typeof Scene>["getSceneNonce"]>;
       }) => {
         const elements = this.scene.getNonDeletedElements();
@@ -139,6 +149,7 @@ export class Renderer {
           editingTextElement,
           newElementId,
           pendingImageElementId,
+          isElementHidden,
         });
 
         const visibleElements = getVisibleCanvasElements({

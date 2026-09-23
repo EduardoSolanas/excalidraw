@@ -1522,6 +1522,7 @@ class App extends React.Component<AppProps, AppState> {
         editingTextElement: this.state.editingTextElement,
         newElementId: this.state.newElement?.id,
         pendingImageElementId: this.state.pendingImageElementId,
+        isElementHidden: this.props.isElementHidden,
       });
     this.visibleElements = visibleElements;
 
@@ -5077,6 +5078,7 @@ class App extends React.Component<AppProps, AppState> {
                   !(isTextElement(element) && element.containerId)),
             )
     )
+      .filter((el) => !this.props.isElementHidden?.(el))
       .filter((el) => this.hitElement(x, y, el))
       .filter((element) => {
         // hitting a frame's element from outside the frame is not considered a hit
@@ -5165,7 +5167,10 @@ class App extends React.Component<AppProps, AppState> {
     let hitElement = null;
     // We need to do hit testing from front (end of the array) to back (beginning of the array)
     for (let index = elements.length - 1; index >= 0; --index) {
-      if (elements[index].isDeleted) {
+      if (
+        elements[index].isDeleted ||
+        this.props.isElementHidden?.(elements[index])
+      ) {
         continue;
       }
       const [x1, y1, x2, y2] = getElementAbsoluteCoords(
@@ -8731,6 +8736,7 @@ class App extends React.Component<AppProps, AppState> {
                 this.state.selectionElement,
                 this.scene.getNonDeletedElementsMap(),
                 false,
+                this.props.isElementHidden,
               )
             : [];
 

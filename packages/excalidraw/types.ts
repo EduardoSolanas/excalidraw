@@ -583,6 +583,15 @@ export interface ExcalidrawProps {
   ) => JSX.Element | null;
   aiEnabled?: boolean;
   showDeprecatedFonts?: boolean;
+  /**
+   * When it returns `true` for an element, the editor treats that element as
+   * absent from the canvas for drawing and pointer interaction only: it is
+   * not rendered, never hit-tested, never box-selected and never selected by
+   * select-all. The scene itself is unaffected — the element stays in
+   * `getSceneElements()`/`getElementsIncludingDeleted()`, still syncs, and
+   * still exports via `exportToCanvas`. Never mutates the element.
+   */
+  isElementHidden?: (element: ExcalidrawElement) => boolean;
 }
 
 export type SceneData = {

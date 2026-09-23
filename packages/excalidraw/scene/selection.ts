@@ -47,11 +47,15 @@ export const getElementsWithinSelection = (
   selection: NonDeletedExcalidrawElement,
   elementsMap: ElementsMap,
   excludeElementsInFrames: boolean = true,
+  isElementHidden?: (element: ExcalidrawElement) => boolean,
 ) => {
   const [selectionX1, selectionY1, selectionX2, selectionY2] =
     getElementAbsoluteCoords(selection, elementsMap);
 
   let elementsInSelection = elements.filter((element) => {
+    if (isElementHidden?.(element)) {
+      return false;
+    }
     let [elementX1, elementY1, elementX2, elementY2] = getElementBounds(
       element,
       elementsMap,

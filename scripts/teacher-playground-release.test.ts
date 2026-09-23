@@ -177,7 +177,13 @@ describe("teacher-playground Excalidraw release", () => {
       "utf8",
     );
 
-    expect(packageJson.version).toBe("0.18.1-tp.11");
+    // The working copy is bumped ahead of the last published release while
+    // its tag and publish steps wait for the owner (AGENTS.md, milestone 1
+    // of PAGED_DOCUMENTS_SPEC.md): the package version now targets the next
+    // release, while everything below documents the release that has
+    // actually happened (still 0.18.1-tp.11) and must not be rewritten to
+    // claim tp.12 shipped.
+    expect(packageJson.version).toBe("0.18.1-tp.12");
     expect(documentation).toContain("teacher-playground-v0.18.1-tp.11");
     expect(documentation).toContain(
       "yarn release:teacher-playground --tag teacher-playground-v0.18.1-tp.11",

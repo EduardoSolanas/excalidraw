@@ -177,35 +177,29 @@ describe("teacher-playground Excalidraw release", () => {
       "utf8",
     );
 
-    // The working copy is bumped ahead of the last published release while
-    // its tag and publish steps wait for the owner (AGENTS.md, milestone 1
-    // of PAGED_DOCUMENTS_SPEC.md): the package version now targets the next
-    // release, while everything below documents the release that has
-    // actually happened (still 0.18.1-tp.11) and must not be rewritten to
-    // claim tp.12 shipped.
     expect(packageJson.version).toBe("0.18.1-tp.12");
-    expect(documentation).toContain("teacher-playground-v0.18.1-tp.11");
+    expect(documentation).toContain("teacher-playground-v0.18.1-tp.12");
     expect(documentation).toContain(
-      "yarn release:teacher-playground --tag teacher-playground-v0.18.1-tp.11",
+      "yarn release:teacher-playground --tag teacher-playground-v0.18.1-tp.12",
     );
     expect(documentation).toContain(
-      "npm install https://cdn.example.com/releases/0.18.1-tp.11/package.tgz",
+      "npm install https://cdn.example.com/releases/0.18.1-tp.12/package.tgz",
     );
-    expect(documentation).toContain("-f version=0.18.1-tp.11");
-    expect(documentation).toContain("GitHub Actions run `33518421200`");
+    expect(documentation).toContain("-f version=0.18.1-tp.12");
+    expect(documentation).toContain("GitHub Actions run `35917185046`");
     expect(documentation).toMatch(
       /validation, GitHub Release, and `publish-r2`\s+jobs all passed/,
     );
     expect(documentation).toContain(
-      "`latest.json` currently points to 0.18.1-tp.11",
+      "`latest.json` currently points to 0.18.1-tp.12",
     );
-    expect(documentation).toContain("9,448,897 bytes");
+    expect(documentation).toContain("9,452,070 bytes");
     expect(documentation).toContain(
       "zero paths matching zh-CN, zh-HK, zh-TW, or Xiaolai",
     );
     expect(documentation).toContain("Japanese and Korean assets are retained");
     expect(workflow).toContain(
-      'description: "Teacher Playground version to upload (for example 0.18.1-tp.11)"',
+      'description: "Teacher Playground version to upload (for example 0.18.1-tp.12)"',
     );
     expect(workflow.indexOf("- name: Build package")).toBeLessThan(
       workflow.indexOf("- name: Release assembly tests"),
